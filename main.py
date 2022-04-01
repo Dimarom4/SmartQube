@@ -1,0 +1,1479 @@
+import sys  # sys нужен для передачи argv в QApplication
+import requests
+from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5.QtWidgets import QMessageBox,QFileDialog
+
+from functools import partial
+from datetime import datetime
+import random
+
+from Login import Ui_LoginWindow
+from main_ui_proba import Ui_MainWindow
+from uch_to_achiv import Ui_Uch_to_achiv_Window
+from achiv_info import Ui_achiv_info
+from uch_info import Ui_Uch_info
+from collections import Counter
+from lessons import Ui_lessons
+
+#import socks
+#db
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import db
+from firebase_admin import storage
+from firebase_admin import auth
+
+#import pyrebase
+
+
+# Fetch the service account key JSON file contents
+cred = credentials.Certificate('cubapp-cd4ba-firebase-adminsdk-7xaqh-5688a100f9.json')
+
+
+firebase_admin.initialize_app(cred, {
+    'databaseURL': 'https://cubapp-cd4ba-default-rtdb.firebaseio.com/',
+    'storageBucket':'cubapp-cd4ba.appspot.com'
+})
+
+bucket = storage.bucket()
+#blob = bucket.blob('users_image/logo.png')
+#blob.upload_from_filename('logo.png')
+#blob.make_public()
+#url = blob.public_url
+#print(url)
+
+
+#storage=firebase_admin.storage()
+#storage.child("users_image/logo.png").put('logo.png')
+
+
+
+
+
+
+
+#from wrong_pass import Ui_WrongWindow
+rank={
+    "Никто":0,
+"Новичок":50,
+"Специалист 3 уровня":100,
+"Специалист 2 уровня":150,
+"Специалист 1 уровня":200,
+"Эксперт 3 уровня":250,
+"Эксперт 2 уровня":300,
+"Эксперт 1 уровня":350,
+"Ветеран 3 уровня":400,
+"Ветеран 2 уровня":450,
+"Ветеран 1 уровня":500,
+"Мастер 3 уровня ":600,
+"Мастер 2 уровня":700,
+"Мастер 1 уровня":800,
+"Великий мастер 3 уровня ":1000,
+"Великий мастер 2 уровня":1150,
+"Великий мастер 1 уровня":1300,
+"Легенда":10000
+}
+rank=list(rank.items())
+class uch_to_achiv(QtWidgets.QMainWindow):
+    submitted = QtCore.pyqtSignal(list)
+    def __init__(self, parent=None):
+        #инициализация мейна
+        super(uch_to_achiv, self).__init__(parent)
+
+        self.ui = Ui_Uch_to_achiv_Window()
+        self.ui.setupUi(self)
+       # self.Main_window= main_window()
+
+        self.ui.search_button.clicked.connect(self.search)
+
+        self.ui.pushButton.clicked.connect(self.handleItemClicked)
+        self.get_data()
+    def get_data(self):
+        users = db.reference('users').get()
+        # print(users)
+
+        users_count = len(users)
+        for i in range(users_count):
+            lenght = self.ui.tableWidget.rowCount()
+            # print(lenght)
+            rowPosition = self.ui.tableWidget.rowCount()
+            # print(rowPosition)
+            if rowPosition < users_count:
+                self.ui.tableWidget.insertRow(rowPosition)
+
+            users_list = users.get(list(users.keys())[i])
+            # добавление данных в ячейки
+            # ID
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget.setItem(i, 1, item)
+            self.ui.tableWidget.item(i, 1).setText(str(users_list.get('user_ID')))
+            # Фио
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget.setItem(i, 0, item)
+            self.ui.tableWidget.item(i, 0).setText(users_list.get('name'))
+            item =  QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsUserCheckable)
+            item.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.tableWidget.setItem(i, 2, item)
+
+    #проверка на отмеченные клетки
+    def handleItemClicked(self, item):
+        item_list=[]
+        print("on_submit")
+
+
+        for i in range(self.ui.tableWidget.rowCount()):
+            print(i)
+            item_id = self.ui.tableWidget.item(i, 2)
+            print(self.ui.tableWidget.item(i, 0).text())
+            item_text=self.ui.tableWidget.item(i, 0).text()
+            if item_id.checkState() == QtCore.Qt.Checked:
+                item_list.append(item_text)
+                print(" Checked")
+
+            else:
+                print(" Noncheked")
+
+        print(item_list)
+        # передача сообщения
+        self.submitted.emit(
+            item_list
+        )
+        self.close()
+        #self.main_window().setText(self.ui.tableWidget.item(1, 0).text())
+
+    #поиск
+    def search(self):
+
+        if self.ui.search_line.text() == "":
+            for i in range(self.ui.tableWidget.rowCount()):
+                self.ui.tableWidget.setRowHidden(i, False)
+        else:
+            # показ всех
+
+            items_row = [itm.row() for itm in
+                         self.ui.tableWidget.findItems(self.ui.search_line.text(), QtCore.Qt.MatchContains)]
+
+            items1 = [itm.text() for itm in
+                      self.ui.tableWidget.findItems(self.ui.search_line.text(), QtCore.Qt.MatchContains)]
+
+            if len(items1) != 0:
+                for i in range(self.ui.tableWidget.rowCount()):
+                    self.ui.tableWidget.setRowHidden(i, False)
+
+                # скрытие лишних
+                for i in range(self.ui.tableWidget.rowCount()):
+                    if i != items_row[0]:
+                        self.ui.tableWidget.setRowHidden(i, True)
+class achiv_info(QtWidgets.QMainWindow):
+    submitted = QtCore.pyqtSignal(list)
+
+    def __init__(self, parent=None):
+        # инициализация мейна
+        super(achiv_info, self).__init__(parent)
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        self.ui = Ui_achiv_info()
+        self.ui.setupUi(self)
+
+
+        # self.Main_window= main_window()
+
+        #отключение всех подключений при закрытии
+    def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+        print("closed")
+        try:
+            self.ui.pushButton_9.clicked.disconnect()
+            self.ui.pushButton.clicked.disconnect()
+            self.ui.lineEdit_2.returnPressed.disconnect()
+            self.ui.lineEdit_2.setEnabled(False)
+        except Exception:
+            pass
+
+    # проверка на отмеченные клетки
+    def saveAchivInfo(self, achivments_list=None):
+        item_list = []
+        print("on_submit")
+
+
+        for i in range(self.achiv_info.ui.tableWidget.rowCount()):
+            print(i)
+            item_id = self.achiv_info.ui.tableWidget.item(i, 4)
+            print(self.achiv_info.ui.tableWidget.item(i, 1).text())
+            item_text = self.achiv_info.ui.tableWidget.item(i, 0).text()
+            if item_id.checkState() == QtCore.Qt.Checked:
+                self.achiv_info.ui.tableWidget.item(i, 2).setText(str(achivments_list[4][1]))
+
+                item_list.append(item_text)
+                print(" Checked")
+
+            else:
+                print(" Noncheked")
+
+        print(item_list)
+        # передача сообщения
+
+
+    def displayInfo(self):
+        self.show()
+class uch_info(QtWidgets.QMainWindow):
+    submitted = QtCore.pyqtSignal(list)
+
+    def __init__(self, parent=None):
+        # инициализация мейна
+        super(uch_info, self).__init__(parent)
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+
+        self.ui = Ui_Uch_info()
+        self.ui.setupUi(self)
+    #отключение всех подключений при закрытии
+    def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+        print("closed")
+        try:
+            self.ui.lineEdit.returnPressed.disconnect()
+
+        except Exception:
+            pass
+        try:
+
+            self.ui.pushButton.clicked.disconnect()
+
+        except Exception:
+            pass
+        try:
+
+            self.ui.pushButton_2.clicked.disconnect()
+        except Exception:
+            pass
+    def displayInfo(self):
+        self.show()
+
+class add_lessons(QtWidgets.QMainWindow):
+
+    def __init__(self, parent=None):
+        #инициализация мейна
+        super(add_lessons, self).__init__(parent)
+
+        self.ui = Ui_lessons()
+        self.ui.setupUi(self)
+    def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+        print("closed")
+
+        try:
+            self.ui.lineEdit.returnPressed.disconnect()
+        except Exception:
+            pass
+        try:
+            self.ui.pushButton_lesson.clicked.disconnect()
+        except Exception:
+            pass
+        try:
+            self.ui.pushButton_intensiv.clicked.disconnect()
+        except Exception:
+            pass
+
+
+    def displayInfo(self):
+        self.show()
+
+#главное окно
+class main_window(QtWidgets.QMainWindow):
+    global imagePath,user_imagePath
+    imagePath=''
+    user_imagePath=''
+
+    def __init__(self, parent=None):
+        #инициализация мейна
+        super(main_window, self).__init__(parent)
+        self.achiv_info = achiv_info()
+        self.uch_info= uch_info()
+        self.add_lessons = add_lessons()
+
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+
+        self.get_data_from_db()
+
+
+        self.ui.pushButton_add_uch_to_achiv.clicked.connect(self.edit_messages)
+
+        self.ui.pushButton_select_image_2.clicked.connect(self.browseImage_2)
+        self.ui.pushButton_delete_image.clicked.connect(self.delete_image_2)
+
+        self.ui.pushButton_select_image_3.clicked.connect(self.browseImage_3)
+        self.ui.pushButton_delete_image_2.clicked.connect(self.delete_image_3)
+        #поиск
+        self.ui.pushButton_uch_search.clicked.connect(self.search_uch)
+        self.ui.pushButton_achiv_search.clicked.connect(self.search_achiv)
+
+        #открытие информации
+        self.ui.tableWidget_achiv.cellDoubleClicked.connect(self.open_achiv_Window)
+        self.ui.tableWidget_uch.cellDoubleClicked.connect(self.open_uch_Window)
+        #новый пользователь
+        self.ui.pushButton_password_generation.clicked.connect(self.generate_password)
+        self.ui.pushButton_add_new_uch.clicked.connect(self.add_new_uch)
+        #новое достижение
+        self.ui.pushButton_add_achive_2.clicked.connect(self.add_new_achiv)
+        #посещения
+        self.ui.pushButton_lesson.clicked.connect(self.lesson)
+        self.ui.pushButton_intensiv.clicked.connect(self.lesson)
+        self.ui.pushButton_club_1.clicked.connect(self.lesson)
+        self.ui.pushButton_club_2.clicked.connect(self.lesson)
+        self.ui.pushButton_club_3.clicked.connect(self.lesson)
+        self.ui.pushButton_help_1.clicked.connect(self.lesson)
+        self.ui.pushButton_help_2.clicked.connect(self.lesson)
+        self.ui.pushButton_help_3.clicked.connect(self.lesson)
+        self.ui.pushButton_festival.clicked.connect(self.lesson)
+
+    #посещения
+    def lesson(self):
+        print("clicked")
+        self.add_lessons.ui.lineEdit.clear()
+        self.add_lessons.ui.label.setText(self.sender().text())
+        self.add_lessons.ui.lineEdit.setFocus()
+        if self.sender().text()=="Посещение занятий и мастер классов":
+            point=1
+        elif self.sender().text()=="Посещение интенсивов" \
+                or self.sender().text() == "Клубное событие 3 уровня"\
+                or self.sender().text() == "Помощь клубу 3 уровня":
+            point=2
+        elif self.sender().text() == "Клубное событие 2 уровня"\
+                or self.sender().text() == "Помощь клубу 2 уровня":
+            point=4
+        elif self.sender().text() == "Клубное событие 1 уровня"\
+                or self.sender().text() == "Помощь клубу 1 уровня":
+            point=6
+        elif self.sender().text() == "Участие в фестивале":
+            point=5
+        self.add_lessons.ui.lineEdit.returnPressed.connect(partial(self.add_point,point,self.sender().text()))
+
+        self.add_lessons.displayInfo()
+
+    def add_point(self,point,achiv_text):
+        print('point',point,achiv_text)
+        user = db.reference('users').order_by_child('card_ID').equal_to(int(self.add_lessons.ui.lineEdit.text())).get()
+        login=list(user)[0]
+
+        users = db.reference('users')
+        users_ref = users.child(login)
+        user_id=users_ref.child("user_ID").get()
+
+        achiv_search='None'
+        #self.get_data_from_db()
+        if achiv_text=="Посещение занятий и мастер классов":
+           achiv_search="Посетить занятия"
+        elif achiv_text=="Посещение интенсивов":
+            achiv_search="Посетить интенсив"
+        elif achiv_text=="Клубное событие 3 уровня":
+            achiv_search="Участвовать в клубном событии 3"
+        elif achiv_text=="Помощь клубу 3 уровня":
+            achiv_search="Участвовать в помощи клубу 3"
+        elif achiv_text=="Клубное событие 2 уровня":
+            achiv_search="Участвовать в клубном событии 2"
+        elif achiv_text=="Помощь клубу 2 уровня":
+            achiv_search="Участвовать в помощи клубу 2"
+        elif achiv_text=="Клубное событие 1 уровня":
+            achiv_search="Участвовать в клубном событии 1"
+        elif achiv_text=="Помощь клубу 1 уровня":
+            achiv_search="Участвовать в помощи клубу 1"
+        elif achiv_text=="Участие в фестивале":
+            achiv_search="Принять участие в фестивале"
+        self.add_lessons.ui.lineEdit.clear()
+
+        achiv_progress=users_ref.child('achiv_progress')
+        achivments = db.reference('achivments').get()
+
+        for i in range(len(achivments)):
+            achivments_key = list(achivments[i].keys())
+            achivments_value = list(achivments[i].values())
+            #print(achivments_key, achivments_value, dict(zip(achivments_key, achivments_value)))
+            achivment=dict(zip(achivments_key, achivments_value))
+            user_progress = achivment['users_progress'][user_id]
+            if achivment['name'] .find(achiv_search)!=-1 and type(user_progress)!=str:
+                print(achivment['name'],achivment['achiv_ID'],user_progress)
+                # добавление очков в пользователя
+                achiv_progress.update({
+                    achivment['achiv_ID']: int(achiv_progress.child(str(achivment['achiv_ID'])).get()) + 1
+                })
+                # добавление очков в достижение
+                db.reference('achivments').child(str(achivment['achiv_ID'])).child('users_progress').update({
+                    user_id: int(user_progress) + 1
+                })
+                # проверка на выполнение достижения
+                if user_progress+1>=achivment['points_need']:
+                    achiv_progress.update({
+                        achivment['achiv_ID']: str(datetime.today().day) + '.' + str(datetime.today().month) + '.' + str(datetime.today().year)
+                    })
+                    db.reference('achivments').child(str(achivment['achiv_ID'])).child('users_progress').update({
+                        user_id: str(datetime.today().day) + '.' + str(datetime.today().month) + '.' + str(datetime.today().year)
+                    })
+                    point+=achivment['point']
+
+        users_ref.update({
+            'all_points': int(users_ref.child('all_points').get()) + point
+        })
+        self.get_data_from_db()
+
+
+    #добавление нового достижения
+    def add_new_achiv(self):
+
+        name=self.ui.lineEdit_achiv_name_2.text()
+
+        type=self.ui.comboBox_achiv_type.currentText()
+        points_need=self.ui.spinBox_reward_search_3.value()
+        image_url = 'None'
+
+        users = db.reference('users').get()
+        achivments = db.reference('achivments').get()
+        achivments_count=len(achivments)
+        point=0
+        if user_imagePath != '':
+            blob = bucket.blob("achivments_image/achivments_" + str(achivments_count + 1) + ".png")
+            blob.upload_from_filename(user_imagePath)
+            blob.make_public()
+            image_url = blob.public_url
+
+
+        users_progress = {}
+        for i in range(len(users)):
+            users_progress.update({str(i): 0})
+
+        if self.ui.tableWidget_uch_in_achiv.rowCount()!=0:
+            point={}
+            for i in range(len(users)):
+                point.update({str(i): 0})
+            for i in range(self.ui.tableWidget_uch_in_achiv.rowCount()):
+                point.update({self.ui.tableWidget_uch_in_achiv.item(i,0).text(): int(self.ui.tableWidget_uch_in_achiv.item(i, 2).text())})
+                users_progress.update({ self.ui.tableWidget_uch_in_achiv.item(i,0).text() :
+                                            str(datetime.today().day)+'.'+str(datetime.today().month)+'.'+str(datetime.today().year) })
+                print(self.ui.tableWidget_uch_in_achiv.item(i,0).text())
+                print(self.ui.tableWidget_uch_in_achiv.item(i, 1).text())
+                print(self.ui.tableWidget_uch_in_achiv.item(i, 2).text())
+
+        if self.ui.spinBox_reward_search_2.isEnabled():
+            print('value',self.ui.spinBox_reward_search_2.value())
+            point=int(self.ui.spinBox_reward_search_2.value())
+
+        achivment_data={
+            'achiv_ID': achivments_count,
+            'achiv_image_URL': image_url,
+            'name': name,
+            'point': point,
+            'points_need': points_need,
+            'type': type,
+            'users_progress':users_progress
+        }
+
+        db.reference("achivments").child(str(achivments_count)).set(achivment_data)
+        print(achivment_data)
+        achiv_progress1=db.reference('achivments').child(str(achivments_count)).child('users_progress').get()
+        print('achiv_progress1',achiv_progress1)
+
+        for i in range(len(achiv_progress1)):
+            print(list(db.reference('users').get())[i])
+            users_list = users.get(list(users.keys())[i])
+            id=users_list.get('user_ID')
+            print('ID', id, list(db.reference('users').get())[i])
+
+
+                    
+            db.reference('users').child( list(db.reference('users').get())[i]   ).child('achiv_progress').update( {str(achivments_count): int(achiv_progress1[id]) } )
+
+            #db.reference('users').child(i).child("achiv_progress").update(      )
+        self.get_data_from_db()
+
+    #генерация пароля
+    def generate_password(self):
+        pas = ''
+        for x in range(16):  # Количество символов (16)
+            pas = pas + random.choice(list(
+                '1234567890abcdefghigklmnopqrstuvyxwzABCDEFGHIGKLMNOPQRSTUVYXWZ'))  # Символы, из которых будет составлен пароль
+        self.ui.lineEdit_ush_pass.setText(pas)
+
+    #добавление нового ученика
+    def add_new_uch(self):
+        users = db.reference('users').get()
+        users_count = len(users)
+        achivments = db.reference('achivments').get()
+
+
+
+
+        email = self.ui.lineEdit_uch_login.text() + '@cubs.com'
+        password = self.ui.lineEdit_ush_pass.text()
+        login=self.ui.lineEdit_uch_login.text()
+        user = auth.create_user(
+            email=email,
+            password=password)
+        print("account added")
+        image_url='None'
+
+
+        print("name",self.ui.lineEdit_uch_name.text())
+        print('login',login)
+        print('pass',password)
+        print('imagePath',imagePath,type(imagePath))
+
+        #print(storage.child("users_image/logo.png").get_url(user['idToken']))
+        if imagePath!='':
+            print("put in db")
+            blob = bucket.blob("users_image/user_"+str(users_count+1)+".png")
+            blob.upload_from_filename(imagePath)
+            blob.make_public()
+            image_url = blob.public_url
+        user_data = {
+                'achiv_progress':  {
+                    '0':0,
+                    '1':0
+                },
+                "all_points": 0,
+                "card_ID": 'None',
+                "hours": 0,
+                "login": login,
+                "name": self.ui.lineEdit_uch_name.text(),
+                "password": password,
+                "points": 0,
+                "user_ID": users_count,
+                "user_image_URL":image_url
+                }
+        for i in range(len(achivments)):
+            achivments_list = list(achivments[i].items())
+            db.reference('users').child(login).child('achiv_progress').update({str(i):0})
+            db.reference('achivments').child(str(i)).child('users_progress').update({str(users_count):0})
+        db.reference("users").child(login).set(user_data)
+        self.get_data_from_db()
+
+            #storage.child("users_image/logo.png").put(imagePath)   #put('logo1.png')
+    def update_uch_data_from_db(self):
+        #print("update from db")
+        users = db.reference('users').order_by_child('user_ID').get()
+        #print(users)
+        users_count = len(users)
+
+        # Добавление учеников в список
+        for i in range(users_count):
+            lenght = self.ui.tableWidget_uch.rowCount()
+            # print(lenght)
+            rowPosition = self.ui.tableWidget_uch.rowCount()
+            # print(rowPosition)
+            if rowPosition < users_count:
+                self.ui.tableWidget_uch.insertRow(rowPosition)
+
+            users_list = users.get(list(users.keys())[i])
+            # print("users_list",' ',users_list)
+            # добавление данных в ячейки
+            # ID
+
+
+            self.ui.tableWidget_uch.item(i, 0).setText(str(users_list.get('user_ID')))
+            #print("ID", self.ui.tableWidget_uch.item(i, 0).text(), users_list)
+            # Фио
+
+
+            self.ui.tableWidget_uch.item(i, 1).setText(users_list.get('name'))
+            # кубиков всего
+
+
+            self.ui.tableWidget_uch.item(i, 2).setText(str(users_list.get('all_points')))
+            # кубикорубли
+
+
+            self.ui.tableWidget_uch.item(i, 3).setText(str(users_list.get('points')))
+            # достижений
+
+
+            achiv_counter = 0
+            for achiv_count in users_list.get('achiv_progress'):
+                # print('achiv_count',achiv_count)
+                if type(achiv_count) == str:
+                    achiv_counter += 1
+            self.ui.tableWidget_uch.item(i, 4).setText(str(achiv_counter))
+            # часов всего
+
+
+            self.ui.tableWidget_uch.item(i, 5).setText(str(users_list.get('hours')))
+
+
+            self.ui.tableWidget_uch.item(i, 6).setText(str(users_list.get('card_ID')))
+        print("ID", self.ui.tableWidget_uch.item(0, 0).text())
+        #self.ui.tableWidget_uch.sortItems(0)
+    #данные из бд
+    def get_data_from_db(self):
+        print("get from db")
+        users = db.reference('users').order_by_child('user_ID').get()
+        #print(users)
+        users_count=len(users)
+
+
+
+
+
+        #Добавление учеников в список
+        for i in range(users_count):
+            lenght = self.ui.tableWidget_uch.rowCount()
+            #print(lenght)
+            rowPosition = self.ui.tableWidget_uch.rowCount()
+            #print(rowPosition)
+            if rowPosition<users_count:
+                self.ui.tableWidget_uch.insertRow(rowPosition)
+
+            users_list = users.get(list(users.keys())[i])
+            #print("users_list",' ',users_list)
+            #добавление данных в ячейки
+            # ID
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_uch.setItem(i, 0, item)
+            self.ui.tableWidget_uch.item(i, 0).setText(str(users_list.get('user_ID')))
+            #print("ID",self.ui.tableWidget_uch.item(i, 0).text(),users_list)
+            #Фио
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_uch.setItem(i, 1, item)
+            self.ui.tableWidget_uch.item(i, 1).setText(users_list.get('name'))
+            #кубиков всего
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_uch.setItem(i, 2, item)
+            self.ui.tableWidget_uch.item(i, 2).setText(str(users_list.get('all_points')))
+            #кубикорубли
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_uch.setItem(i, 3, item)
+            self.ui.tableWidget_uch.item(i, 3).setText(str(users_list.get('points')))
+            #достижений
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_uch.setItem(i, 4, item)
+            achiv_counter=0
+            for achiv_count in users_list.get('achiv_progress'):
+                #print('achiv_count',achiv_count)
+                if type(achiv_count)== str:
+                    achiv_counter+=1
+            self.ui.tableWidget_uch.item(i, 4).setText(str(achiv_counter))
+            #часов всего
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_uch.setItem(i, 5, item)
+            self.ui.tableWidget_uch.item(i, 5).setText(str(users_list.get('hours')))
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_uch.setItem(i, 6, item)
+            self.ui.tableWidget_uch.item(i, 6).setText(str(users_list.get('card_ID')))
+        #print("ID", self.ui.tableWidget_uch.item(0, 0).text())
+        #self.ui.tableWidget_uch.sortItems(0)
+        #добавление достижений в список
+        achivments = db.reference('achivments').get()
+        for i in range(len(achivments)):
+            lenght = self.ui.tableWidget_achiv.rowCount()
+            #print(lenght)
+            rowPosition = self.ui.tableWidget_achiv.rowCount()
+            #print(rowPosition)
+            if rowPosition<len(achivments):
+                self.ui.tableWidget_achiv.insertRow(rowPosition)
+
+            achivments_list = list(achivments[i].items())
+
+            # добавление данных в ячейки
+            #ID
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_achiv.setItem(i, 0, item)
+            self.ui.tableWidget_achiv.item(i, 0).setText(str(achivments_list[0][1]))
+            # название
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_achiv.setItem(i, 1, item)
+            self.ui.tableWidget_achiv.item(i, 1).setText(str(achivments_list[2][1]))
+            #награда
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_achiv.setItem(i, 2, item)
+            self.ui.tableWidget_achiv.item(i, 2).setText(str(achivments_list[3][1]))
+            #тип
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_achiv.setItem(i, 3, item)
+            self.ui.tableWidget_achiv.item(i, 3).setText(str(achivments_list[5][1]))
+            #ученики
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_achiv.setItem(i, 4, item)
+            string_for_achivments=""
+            for j in range(len(achivments_list[6][1])):
+                if type(achivments_list[6][1][j]) !=str:
+                    pass
+                else:
+                    #print(j)
+                    #print('check',' ',users.get(list(users.keys())[j]))
+                    users_list = users.get(list(users.keys())[j])
+                    string_for_achivments+=str(users_list.get('user_ID'))+' '
+
+            self.ui.tableWidget_achiv.item(i, 4).setText(string_for_achivments)
+            # %учеников
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_achiv.setItem(i, 5, item)
+            #print('users',Counter(achivments_list[5][1])["None"])
+            counter=0
+            for j in range(users_count):
+                if type( achivments_list[6][1][j]) == str:
+                    counter+=1
+            self.ui.tableWidget_achiv.item(i, 5).setText(str(round(counter/users_count*100)))
+        #таблица лидеров
+
+        for i in range(len(users)):
+            lenght = self.ui.tableWidget_leaderboard.rowCount()
+            #print(lenght)
+            rowPosition = self.ui.tableWidget_leaderboard.rowCount()
+            #print(rowPosition)
+            if rowPosition<len(users):
+                self.ui.tableWidget_leaderboard.insertRow(rowPosition)
+
+            users_list = users.get(list(users.keys())[i])
+            #добавление данных в ячейки
+            # ID
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_leaderboard.setItem(i, 0, item)
+            self.ui.tableWidget_leaderboard.item(i, 0).setText(str(users_list.get('user_ID')))
+            #Фио
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_leaderboard.setItem(i, 0, item)
+            self.ui.tableWidget_leaderboard.item(i, 0).setText(users_list.get('name'))
+            #кубиков всего
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_leaderboard.setItem(i, 1, item)
+            self.ui.tableWidget_leaderboard.item(i, 1).setText(str(users_list.get('all_points')))
+
+    #открытие карточки достижения
+    def open_achiv_Window(self):
+        row = self.ui.tableWidget_achiv.currentIndex().row()
+        column = self.ui.tableWidget_achiv.currentIndex().column()
+        print(row, column)
+        achiv_id=int(self.ui.tableWidget_achiv.item(row,0).text())
+        users = db.reference('users').get()
+        users_count = len(users)
+
+        achivments = db.reference('achivments').get()
+        achivments_list = list(achivments[ achiv_id ].items())
+        print(achivments_list)
+        for i in range(users_count):
+
+            rowPosition = self.achiv_info.ui.tableWidget.rowCount()
+            print(rowPosition)
+            if rowPosition < users_count:
+                self.achiv_info.ui.tableWidget.insertRow(rowPosition)
+            users_list = users.get(list(users.keys())[i])
+            print("users_list", ' ', users_list)
+            # добавление данных в ячейки
+            # ID
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.achiv_info.ui.tableWidget.setItem(i, 0, item)
+            self.achiv_info.ui.tableWidget.item(i, 0).setText(str(users_list.get('user_ID')))
+            # Фио
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.achiv_info.ui.tableWidget.setItem(i, 1, item)
+            self.achiv_info.ui.tableWidget.item(i, 1).setText(users_list.get('name'))
+            # Прогресс
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEnabled)
+            self.achiv_info.ui.tableWidget.setItem(i, 2, item)
+            if type(achivments_list[6][1][users_list.get('user_ID')]) == str:
+                self.achiv_info.ui.tableWidget.item(i, 2).setText(str(achivments_list[4][1]))
+            else:
+                self.achiv_info.ui.tableWidget.item(i, 2).setText(str(achivments_list[6][1][users_list.get('user_ID')]))
+            #награда
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable)
+            self.achiv_info.ui.tableWidget.setItem(i, 3, item)
+            if type(achivments_list[6][1][users_list.get('user_ID')]) == str:
+                self.achiv_info.ui.tableWidget.item(i, 3).setText(str(achivments_list[3][1]))
+            else:
+                self.achiv_info.ui.tableWidget.item(i, 3).setText('0')
+            # достижение
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsUserCheckable|QtCore.Qt.ItemIsEnabled)
+            item.setCheckState(QtCore.Qt.CheckState.Checked)
+
+            if type(achivments_list[6][1][users_list.get('user_ID')]) == str:
+                item.setCheckState(QtCore.Qt.CheckState.Checked)
+                self.achiv_info.ui.tableWidget.setItem(i, 4, item)
+            else:
+                item.setCheckState(QtCore.Qt.CheckState.Unchecked)
+                self.achiv_info.ui.tableWidget.setItem(i, 4, item)
+            # награда
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.achiv_info.ui.tableWidget.setItem(i,5, item)
+            if type(achivments_list[6][1][users_list.get('user_ID')]) == str:
+                self.achiv_info.ui.tableWidget.item(i, 5).setText(str(achivments_list[6][1][users_list.get('user_ID')]))
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.achiv_info.ui.tableWidget.setItem(i, 6, item)
+            self.achiv_info.ui.tableWidget.item(i, 6).setText(str(users_list.get('card_ID')))
+        achiv_counter=0
+        for achiv in achivments_list[6][1]:
+            if type(achiv)== int:
+                print("achiv",achiv)
+                achiv_counter+=1
+        self.achiv_info.ui.groupBox_4.setTitle(str(achivments_list[2][1]))
+        self.achiv_info.ui.label_31.setText(str(len(achivments_list[6][1])-achiv_counter))
+        self.achiv_info.ui.progressBar_3.setValue(int(self.ui.tableWidget_achiv.item(row, 5).text()))
+        self.achiv_info.ui.pushButton_9.clicked.connect(partial(self.saveAchivInfo,achivments_list))
+        self.achiv_info.ui.pushButton.clicked.connect(partial(self.add_user_in_achiv,achivments_list))
+        self.achiv_info.displayInfo()
+    #сохранение
+    def saveAchivInfo(self,achivments_list):
+        item_list = []
+        print("on_submit")
+        print(self.achiv_info.ui.lineEdit_2.text())
+
+
+        for i in range(self.achiv_info.ui.tableWidget.rowCount()):
+            print(i)
+            item_id = self.achiv_info.ui.tableWidget.item(i, 4)
+            print(self.achiv_info.ui.tableWidget.item(i, 1).text())
+            item_text = self.achiv_info.ui.tableWidget.item(i, 0).text()
+            print(self.achiv_info.ui.tableWidget.item(i, 5).text())
+            if item_id.checkState() == QtCore.Qt.Checked and self.achiv_info.ui.tableWidget.item(i, 5).text() == '':
+
+                self.achiv_info.ui.tableWidget.item(i, 2).setText(str(achivments_list[4][1]))
+                self.achiv_info.ui.tableWidget.item(i, 5).setText(str(datetime.today().day)+'.'+str(datetime.today().month)+'.'+str(datetime.today().year))
+
+                
+                item_list.append(item_text)
+
+
+            else:
+                print(" Noncheked")
+
+        print(item_list)
+        self.achiv_info.ui.pushButton_9.clicked.disconnect()
+    #Добавление учеников карточками
+    def update_uch(self,achivments_list):
+        print(self.achiv_info.ui.lineEdit_2.text())
+
+
+        users = db.reference('users').get()
+        users_count = len(users)
+        for i in range(users_count):
+            users_list = users.get(list(users.keys())[i])
+            if str(users_list.get("card_ID"))== self.achiv_info.ui.lineEdit_2.text():
+                item_id = self.achiv_info.ui.tableWidget.item(i, 4)
+                item_id.setCheckState(QtCore.Qt.CheckState.Checked)
+                print(item_id.checkState())
+                print("same")
+
+        for i in range(self.achiv_info.ui.tableWidget.rowCount()):
+            print(i)
+            item_id = self.achiv_info.ui.tableWidget.item(i, 4)
+
+            print(self.achiv_info.ui.tableWidget.item(i, 1).text())
+            item_text = self.achiv_info.ui.tableWidget.item(i, 0).text()
+            print(self.achiv_info.ui.tableWidget.item(i, 5).text())
+            if item_id.checkState() == QtCore.Qt.Checked and self.achiv_info.ui.tableWidget.item(i, 5).text() == '':
+                self.achiv_info.ui.tableWidget.item(i, 2).setText(str(achivments_list[4][1]))
+                self.achiv_info.ui.tableWidget.item(i, 5).setText(
+                    str(datetime.today().day) + '.' + str(datetime.today().month) + '.' + str(
+                        datetime.today().year))
+
+
+        self.achiv_info.ui.lineEdit_2.clear()
+        #self.achiv_info.ui.pushButton.clicked.disconnect()
+        #self.achiv_info.ui.lineEdit_2.setEnabled(False)
+        #self.achiv_info.ui.lineEdit_2.returnPressed.disconnect()
+    #тоже добавление
+    def add_user_in_achiv(self,achivments_list):
+        self.achiv_info.ui.lineEdit_2.setEnabled(True)
+        self.achiv_info.ui.lineEdit_2.setFocus()
+        #self.achiv_info.ui.lineEdit_2.clear()
+        print(self.achiv_info.ui.lineEdit_2.text())
+        self.achiv_info.ui.lineEdit_2.returnPressed.connect(partial(self.update_uch,achivments_list))
+
+        print("add")
+
+
+    #открытие окна карточки ученика
+    def open_uch_Window(self):
+        row = self.ui.tableWidget_uch.currentIndex().row()
+        column = self.ui.tableWidget_uch.currentIndex().column()
+        print(row, column)
+        users = db.reference('users').get()
+        users_count = len(users)
+        user_table_ID=int(self.ui.tableWidget_uch.item(row,0).text())
+        find_id=''
+        user_login=''
+        for i in range(users_count):
+            if db.reference('users').child(users.get(list(users.keys())[i]).get('login')).child("user_ID").get()==user_table_ID:
+                print(users.get(list(users.keys())[i]).get('login'))
+                user_login=users.get(list(users.keys())[i]).get('login')
+                find_id=db.reference('users').child(user_login).child("user_ID").get()
+        #print('ID',user_table_ID,users.get(list(users.keys())[user_table_ID]).get('login'),find_id)
+        users_list= db.reference('users').child(user_login).get()
+    #   users_list = users.get(list(users.keys())[find_id])
+        find_id=users_list.get('user_ID')
+        #print('ученик1', users_list1)
+        #print('ученик',find_id, users_list)
+        achivments = db.reference('achivments').get()
+        #print(achivments)
+
+
+        achivments_count=len(achivments)
+        #achivments_list = list(achivments[row].items())
+        for i in range(achivments_count):
+            self.uch_info.displayInfo()
+            rowPosition = self.uch_info.ui.tableWidget.rowCount()
+            #print(rowPosition)
+            if rowPosition < achivments_count:
+                self.uch_info.ui.tableWidget.insertRow(rowPosition)
+            achivments_list = achivments[i]
+            #print("achivments_list", ' ', achivments_list)
+            # добавление данных в ячейки
+            # ID
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.uch_info.ui.tableWidget.setItem(i, 0, item)
+            self.uch_info.ui.tableWidget.item(i, 0).setText(str(achivments_list.get('achiv_ID')))
+            # Название
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.uch_info.ui.tableWidget.setItem(i, 1, item)
+            self.uch_info.ui.tableWidget.item(i, 1).setText(achivments_list.get('name'))
+            # Прогресс
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEnabled)
+            self.uch_info.ui.tableWidget.setItem(i, 2, item)
+            if type(achivments_list.get('users_progress')[find_id]) != str:
+                self.uch_info.ui.tableWidget.item(i, 2).setText(str(achivments_list.get('users_progress')[find_id]))
+            else:
+                self.uch_info.ui.tableWidget.item(i, 2).setText(str(achivments_list.get('points_need')))
+            # награда
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable)
+            self.uch_info.ui.tableWidget.setItem(i, 3, item)
+
+            if type(achivments_list.get('users_progress')[find_id]) == str:
+                self.uch_info.ui.tableWidget.item(i, 3).setText(str(achivments_list.get('point')))
+            else:
+                self.uch_info.ui.tableWidget.item(i, 3).setText('0')
+            # достижение
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+            item.setCheckState(QtCore.Qt.CheckState.Checked)
+
+            if type(achivments_list.get('users_progress')[find_id]) == str:
+                item.setCheckState(QtCore.Qt.CheckState.Checked)
+                self.uch_info.ui.tableWidget.setItem(i, 4, item)
+            else:
+                item.setCheckState(QtCore.Qt.CheckState.Unchecked)
+                self.uch_info.ui.tableWidget.setItem(i, 4, item)
+            # дата
+
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.uch_info.ui.tableWidget.setItem(i, 5, item)
+            if type(achivments_list.get('users_progress')[find_id]) == str:
+                self.uch_info.ui.tableWidget.item(i, 5).setText(str(achivments_list.get('users_progress')[find_id]))
+
+        self.uch_info.ui.groupBox.setTitle(users_list.get('name'))
+        self.uch_info.ui.label_6.setText(str(users_list.get('all_points')))
+        self.uch_info.ui.label_17.setText(str(users_list.get('hours')))
+        self.uch_info.ui.lineEdit_2.setText(str(users_list.get('password')))
+        self.uch_info.ui.lineEdit_3.setText(str(users_list.get('login')))
+        #rank
+        for i in range(len(rank)-1):
+            if users_list.get('all_points') >= rank[i][1] and users_list.get('all_points')<1300 and  users_list.get('all_points') <= rank[i+1][1]:
+                print("i",i)
+                self.uch_info.ui.label_8.setText(rank[i+1][0])
+                self.uch_info.ui.label_13.setText(str(rank[i+1][1] - users_list.get('all_points')))
+                self.uch_info.ui.label_10.setText(str(rank[i][1]))
+                self.uch_info.ui.label_11.setText(str(rank[i+1][1]))
+                self.uch_info.ui.progressBar.setValue( int(100 -  (rank[i+1][1] - users_list.get('all_points'))*100  /(rank[i+1][1]-rank[i][1])   ))
+                break
+        self.uch_info.ui.pushButton_13.clicked.connect(self.toggle_password)
+        self.uch_info.ui.lineEdit.setText(str(users_list.get('card_ID')))
+        self.uch_info.ui.pushButton.clicked.connect(partial(self.enable_card, users_list.get('login')))
+
+        #image
+        self.uch_info.ui.label.setMaximumSize(128,128)
+        image = QtGui.QImage()
+        url_image=users_list.get("user_image_URL")
+        if url_image=="None":
+            self.uch_info.ui.label.setPixmap(QtGui.QPixmap('logo.png'))
+        else:
+            image.loadFromData(requests.get(url_image).content)
+            self.uch_info.ui.label.setPixmap(QtGui.QPixmap(image))
+
+        #self.uch_info.ui.lineEdit.returnPressed.connect(partial(self.enable_card, users_list.get('login')))
+        self.uch_info.ui.pushButton_2.clicked.connect(partial(self.delete_card,users_list.get('login')))
+        self.uch_info.displayInfo()
+    #добавление карты ученику
+    def add_card_id(self, login):
+        print('user', login)
+        print(self.uch_info.ui.lineEdit.text())
+        self.uch_info.ui.lineEdit.setEnabled(False)
+        users = db.reference('users')
+        users_ref = users.child(login)
+        users_ref.update({
+            'card_ID': int(self.uch_info.ui.lineEdit.text())
+        })
+        self.update_uch_data_from_db()
+        #self.uch_info.ui.lineEdit.returnPressed.disconnect()
+
+    #удаление карты
+    def delete_card(self,login):
+        print('login1',login)
+        users = db.reference('users')
+        users_ref = users.child(login)
+        users_ref.update({
+            'card_ID': 'None'
+        })
+        self.uch_info.ui.lineEdit.setText("None")
+        self.update_uch_data_from_db()
+    #включение видимости карт
+    def enable_card(self,login):
+        print('users123',login)
+
+        self.uch_info.ui.lineEdit.clear()
+        self.uch_info.ui.lineEdit.setEnabled(True)
+        self.uch_info.ui.lineEdit.setFocus()
+        self.uch_info.ui.lineEdit.returnPressed.connect(partial(self.add_card_id,login))
+        #self.uch_info.ui.pushButton.clicked.disconnect()
+    #видимость пароля
+    def toggle_password(self):
+        if self.uch_info.ui.pushButton_13.text()=="Показать логин и пароль":
+
+            self.uch_info.ui.lineEdit_2.setEchoMode(False)
+            self.uch_info.ui.lineEdit_3.setEchoMode(False)
+            self.uch_info.ui.lineEdit_2.setReadOnly(False)
+            self.uch_info.ui.lineEdit_3.setReadOnly(False)
+            self.uch_info.ui.pushButton_13.setText("Скрыть логин и пароль")
+            self.uch_info.ui.lineEdit_2.setEnabled(True)
+            self.uch_info.ui.lineEdit_3.setEnabled(True)
+        else:
+            self.uch_info.ui.lineEdit_2.setEchoMode(QtWidgets.QLineEdit.Password)
+            self.uch_info.ui.lineEdit_3.setEchoMode(QtWidgets.QLineEdit.Password)
+            self.uch_info.ui.lineEdit_2.setReadOnly(True)
+            self.uch_info.ui.lineEdit_3.setReadOnly(True)
+
+            self.uch_info.ui.pushButton_13.setText("Показать логин и пароль")
+            self.uch_info.ui.lineEdit_2.setEnabled(False)
+            self.uch_info.ui.lineEdit_3.setEnabled(False)
+    def untoggle_password(self):
+        self.uch_info.ui.lineEdit_2.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.uch_info.ui.lineEdit_3.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.uch_info.ui.lineEdit_2.setReadOnly(True)
+        self.uch_info.ui.lineEdit_3.setReadOnly(True)
+        self.uch_info.ui.pushButton_13.setText("Показать логин и пароль")
+    #открытие
+    def browseUch(self):
+        print("clicked")
+        self.w = uch_to_achiv()
+        self.w.show()
+
+
+
+    #удаление картинки
+    def delete_image_2(self):
+        print("clicked")
+       # fname= QFileDialog.getOpenFileName(self,'open file','c\\', 'Image files (*.jpg *.png)')
+        self.ui.label_achiv_image_2.setPixmap(QtGui.QPixmap('logo.png'))
+    def delete_image_3(self):
+        print("clicked")
+        #fname = QFileDialog.getOpenFileName(self, 'open file', 'c\\', 'Image files (*.jpg *.png)')
+        #imagePath = fname[0]
+        self.ui.label_user_image_2.setPixmap(QtGui.QPixmap('logo.png'))
+    #выбор картинки
+    def browseImage_2(self):
+        print("clicked")
+        fname= QFileDialog.getOpenFileName(self,'open file','c\\', 'Image files (*.jpg *.png)')
+        global user_imagePath
+        user_imagePath = fname[0]
+        self.ui.label_achiv_image_2.setPixmap(QtGui.QPixmap(user_imagePath))
+    def browseImage_3(self):
+        print("clicked")
+        fname = QFileDialog.getOpenFileName(self, 'open file', 'c\\', 'Image files (*.jpg *.png)')
+        global imagePath
+        imagePath = fname[0]
+        self.ui.label_user_image_2.setPixmap(QtGui.QPixmap(imagePath))
+
+    #поиск учеников
+    def search_uch(self):
+
+        if self.ui.lineEdit_uch_search.text() == "":
+            for i in range(self.ui.tableWidget_uch.rowCount()):
+                self.ui.tableWidget_uch.setRowHidden(i, False)
+        else:
+            # показ всех
+
+            items_row = [itm.row() for itm in
+                         self.ui.tableWidget_uch.findItems(self.ui.lineEdit_uch_search.text(), QtCore.Qt.MatchContains)]
+
+            items1 = [itm.text() for itm in
+                      self.ui.tableWidget_uch.findItems(self.ui.lineEdit_uch_search.text(), QtCore.Qt.MatchContains)]
+
+            if len(items1) != 0:
+                for i in range(self.ui.tableWidget_uch.rowCount()):
+                    self.ui.tableWidget_uch.setRowHidden(i, False)
+
+                # скрытие лишних
+                for i in range(self.ui.tableWidget_uch.rowCount()):
+                    if i != items_row[0]:
+                        self.ui.tableWidget_uch.setRowHidden(i, True)
+    #показ ачивок
+    def show_achiv(self,final):
+        print(1)
+        print(final)
+        if len(final) != 0:
+            for i in range(self.ui.tableWidget_achiv.rowCount()):
+                self.ui.tableWidget_achiv.setRowHidden(i, False)
+            # скрытие лишних
+            for i in range(self.ui.tableWidget_achiv.rowCount()):
+                if i not in final:
+                    self.ui.tableWidget_achiv.setRowHidden(i, True)
+    #Поиск ачивок
+    def search_achiv(self):
+        #Поиск по всем признакам
+        if self.ui.comboBox_type_search.currentText() != "Выбор типа..." and self.ui.lineEdit_achiv_search.text() != "" and self.ui.spinBox_reward_search.value()!=0:
+            print("Поиск по всем признакам")
+            #Тип
+            # Тип
+            items_type_row = []
+            rows = self.ui.tableWidget_achiv.rowCount()
+            for i in range(rows):
+                print(self.ui.tableWidget_achiv.item(i, 3).text())
+                if self.ui.tableWidget_achiv.item(i, 3).text().find(
+                        str(self.ui.comboBox_type_search.currentText())) != -1:
+                    items_type_row.append(i)
+            # текст
+            items_text_row = []
+            rows = self.ui.tableWidget_achiv.rowCount()
+            for i in range(rows):
+                print(self.ui.tableWidget_achiv.item(i, 1).text())
+                if self.ui.tableWidget_achiv.item(i, 1).text().find(str(self.ui.lineEdit_achiv_search.text())) != -1:
+                    items_text_row.append(i)
+            #баллы
+            items_ball_row = []
+            rows = self.ui.tableWidget_achiv.rowCount()
+            for i in range(rows):
+                if self.ui.tableWidget_achiv.item(i, 2).text() == str(self.ui.spinBox_reward_search.value()):
+                    items_ball_row.append(i)
+            items_final=[]
+            for i in range(100):
+                if i in items_type_row and i in items_text_row and i in items_ball_row :
+                    items_final.append(i)
+            print("final",items_final)
+
+            self.show_achiv(items_final)
+
+        # Поиск по тексту и типу
+        elif self.ui.comboBox_type_search.currentText() != "Выбор типа..." and self.ui.lineEdit_achiv_search.text() != "" :
+            print("Поиск по тексту и типу")
+            print(self.ui.spinBox_reward_search.value())
+            # Тип
+            items_type_row = []
+            rows = self.ui.tableWidget_achiv.rowCount()
+            for i in range(rows):
+                print(self.ui.tableWidget_achiv.item(i, 3).text())
+                if self.ui.tableWidget_achiv.item(i, 3).text().find(
+                        str(self.ui.comboBox_type_search.currentText())) != -1:
+                    items_type_row.append(i)
+            # текст
+            items_text_row = []
+            rows = self.ui.tableWidget_achiv.rowCount()
+            for i in range(rows):
+                print(self.ui.tableWidget_achiv.item(i, 1).text())
+                if self.ui.tableWidget_achiv.item(i, 1).text().find(str(self.ui.lineEdit_achiv_search.text())) != -1:
+                    items_text_row.append(i)
+
+            items_final = []
+            for i in range(100):
+                if i in items_type_row and i in items_text_row :
+                    items_final.append(i)
+            print("final", items_final)
+            self.show_achiv(items_final)
+        # Поиск по тексту и баллам
+        elif   self.ui.lineEdit_achiv_search.text() != "" and self.ui.spinBox_reward_search.value() != 0:
+            print("Поиск по тексту и баллам")
+            # текст
+            items_text_row = []
+            rows = self.ui.tableWidget_achiv.rowCount()
+            for i in range(rows):
+                print(self.ui.tableWidget_achiv.item(i, 1).text())
+                if self.ui.tableWidget_achiv.item(i, 1).text().find(str(self.ui.lineEdit_achiv_search.text())) != -1:
+                    items_text_row.append(i)
+            # баллы
+
+            items_ball_row = []
+            rows = self.ui.tableWidget_achiv.rowCount()
+            for i in range(rows):
+                if self.ui.tableWidget_achiv.item(i, 2).text() == str(self.ui.spinBox_reward_search.value()):
+                    items_ball_row.append(i)
+
+            print(items_ball_row)
+            items_final = []
+            for i in range(100):
+                if i in items_text_row and i in items_ball_row:
+                    items_final.append(i)
+            print("final", items_final)
+
+            self.show_achiv(items_final)
+        # Поиск по типу и баллам
+        elif self.ui.comboBox_type_search.currentText() != "Выбор типа..."  and self.ui.spinBox_reward_search.value() != 0:
+            print("Поиск по типу и баллам")
+            # Тип
+            items_type_row = []
+            rows = self.ui.tableWidget_achiv.rowCount()
+            for i in range(rows):
+                print(self.ui.tableWidget_achiv.item(i, 3).text())
+                if self.ui.tableWidget_achiv.item(i, 3).text().find(
+                        str(self.ui.comboBox_type_search.currentText())) != -1:
+                    items_type_row.append(i)
+
+            # баллы
+
+            items_ball_row = []
+            rows = self.ui.tableWidget_achiv.rowCount()
+            for i in range(rows):
+                if self.ui.tableWidget_achiv.item(i, 2).text() == str(self.ui.spinBox_reward_search.value()):
+                    items_ball_row.append(i)
+
+
+            items_final = []
+            for i in range(100):
+                if i in items_type_row and i in items_ball_row:
+                    items_final.append(i)
+            print("final", items_final)
+
+            self.show_achiv(items_final)
+        #поиск по типу
+        elif self.ui.comboBox_type_search.currentText() != "Выбор типа..." :
+            print("Поиск по типу")
+            # Тип
+            items_type_row = []
+            rows = self.ui.tableWidget_achiv.rowCount()
+            for i in range(rows):
+                print(self.ui.tableWidget_achiv.item(i, 3).text())
+                if self.ui.tableWidget_achiv.item(i, 3).text().find(str(self.ui.comboBox_type_search.currentText())) != -1:
+                    items_type_row.append(i)
+            print(items_type_row)
+            self.show_achiv(items_type_row)
+        # Поиск тексту
+        elif  self.ui.lineEdit_achiv_search.text() != "":
+            print("Поиск по тексту")
+
+            # текст
+            items_text_row = []
+            rows = self.ui.tableWidget_achiv.rowCount()
+            for i in range(rows):
+                print(self.ui.tableWidget_achiv.item(i, 1).text())
+                if self.ui.tableWidget_achiv.item(i, 1).text().find(str(self.ui.lineEdit_achiv_search.text())) !=-1:
+                    items_text_row.append(i)
+            print(items_text_row)
+            self.show_achiv(items_text_row)
+        # Поиск по награде
+        elif  self.ui.spinBox_reward_search.value() != 0:
+            print("Поиск по награде")
+            items_ball_row=[]
+            rows=self.ui.tableWidget_achiv.rowCount()
+            for i in range(rows):
+                if  self.ui.tableWidget_achiv.item(i,2).text() == str(self.ui.spinBox_reward_search.value()):
+                    items_ball_row.append(i)
+            self.show_achiv(items_ball_row)
+        #Показ всех
+        else:
+            for i in range(self.ui.tableWidget_achiv.rowCount()):
+                self.ui.tableWidget_achiv.setRowHidden(i, False)
+
+    #получение сообщения
+    @QtCore.pyqtSlot(list)
+    def update_messages(self, message_a):
+        print("update_messages")
+        #само сообщение
+        print(message_a)
+
+        self.message_a = message_a
+        #Изменение количества строк
+        lenght = self.ui.tableWidget_uch_in_achiv.rowCount()
+
+        print(lenght)
+        self.ui.tableWidget_uch_in_achiv.setRowCount(len(message_a))
+        lenght=self.ui.tableWidget_uch_in_achiv.rowCount()
+
+        print(lenght)
+
+        users = db.reference('users').get()
+        users_count = len(users)
+
+        find_id = ''
+        user_name = ''
+        # Изменение текста в итеме
+        for i in range(lenght):
+            print("i=",i)
+            print(message_a[i])
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_uch_in_achiv.setItem(i, 1, item)
+            self.ui.tableWidget_uch_in_achiv.item(i, 1).setText(message_a[i])
+
+
+            for j in range(users_count):
+                if db.reference('users').child(users.get(list(users.keys())[j]).get('login')).child(
+                        "name").get() == (message_a[i]):
+                    find_id = db.reference('users').child(users.get(list(users.keys())[j]).get('login')).child(
+                        "user_ID").get()
+            item = QtWidgets.QTableWidgetItem()
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_uch_in_achiv.setItem(i, 0, item)
+            self.ui.tableWidget_uch_in_achiv.item(i, 0).setText(str(find_id))
+            item = QtWidgets.QTableWidgetItem()
+            #item.setFlags(QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsUserCheckable|QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsDragEnabled)
+            self.ui.tableWidget_uch_in_achiv.setItem(i, 2, item)
+            self.ui.tableWidget_uch_in_achiv.item(i, 2).setText('0')
+        self.ui.tableWidget_uch_in_achiv.sortItems(0)
+            # print('ID',user_table_ID,users.get(list(users.keys())[user_table_ID]).get('login'),find_id)
+
+
+    def edit_messages(self):
+        self.dialog = uch_to_achiv()
+        #Отправка из основы во второе окно
+        #self.dialog.set_messages(self.ui.tableWidget_2.item(0,0).text() )
+        #получение из 2 в основу
+        self.dialog.submitted.connect(self.update_messages)
+        self.dialog.show()
+
+
+
+#окно логина
+class Login(QtWidgets.QMainWindow):
+    #вход в систему
+    def pass_reg(self):
+
+
+        login=self.ui.loginEdit.text()
+        password=self.ui.passwordEdit.text()
+
+        #проверка пароля
+        if login == "admin" and password == "admin" :
+            #запуск основы
+            print(1)
+            self.show_new_window()
+            #self.window = QtWidgets.QMainWindow()
+            #self.ui = Ui_MainWindow()
+            #self.ui.setup(self.window)
+
+            #закрытие логина
+            #self.window.show()
+            #self.close()
+
+        else:
+            #ошибка
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setText("Ошибка")
+            msg.setInformativeText('Неверный логин или пароль')
+            msg.setWindowTitle("Ошибка")
+            msg.exec_()
+
+    #открытие мейна
+    def show_new_window(self):
+        self.close()
+        self.w = main_window()
+        self.w.show()
+
+
+    def __init__(self):
+        #инициализация логина
+        print(5)
+        super().__init__()
+
+        self.ui = Ui_LoginWindow()
+        self.ui.setupUi(self)
+
+
+        self.ui.passwordEdit.setEchoMode(QtWidgets.QLineEdit.Password)
+
+        self.ui.pushButton.clicked.connect(self.pass_reg)
+
+def main():
+
+    app = QtWidgets.QApplication(sys.argv)
+    application = main_window()
+    application.show()
+
+    sys.exit(app.exec())
+    #main1()
+
+if __name__ == '__main__':  # Если мы запускаем файл напрямую, а не импортируем
+    main()  # то запускаем функцию main()
+
+
+
+class Login(QtWidgets.QMainWindow):
+    #вход в систему
+    def pass_reg(self):
+
+
+        login=self.ui.loginEdit.text()
+        password=self.ui.passwordEdit.text()
+
+        #проверка пароля
+        if login == "admin" and password == "admin" :
+            #запуск основы
+            print(1)
+            self.show_new_window()
+            #self.window = QtWidgets.QMainWindow()
+            #self.ui = Ui_MainWindow()
+            #self.ui.setup(self.window)
+
+            #закрытие логина
+            #self.window.show()
+            #self.close()
+
+        else:
+            #ошибка
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setText("Ошибка")
+            msg.setInformativeText('Неверный логин или пароль')
+            msg.setWindowTitle("Ошибка")
+            msg.exec_()
+
+    #открытие мейна
+    '''
+    def show_new_window(self):
+        self.close()
+        self.w = main_window()
+        self.w.show()
+
+'''
+    def __init__(self):
+        #инициализация логина
+        super().__init__()
+
+        self.ui = Ui_LoginWindow()
+        self.ui.setupUi(self)
+
+
+        self.ui.passwordEdit.setEchoMode(QtWidgets.QLineEdit.Password)
+
+        self.ui.pushButton.clicked.connect(self.pass_reg)
+def main():
+
+    app = QtWidgets.QApplication(sys.argv)
+    application = main_window()
+    application.show()
+
+    sys.exit(app.exec())
+    #main1()
+
+if __name__ == '__main__':  # Если мы запускаем файл напрямую, а не импортируем
+
+    main()  # то запускаем функцию main()
