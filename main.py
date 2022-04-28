@@ -394,11 +394,11 @@ class main_window(QtWidgets.QMainWindow):
                 print(achivment['name'],achivment['achiv_ID'],user_progress)
                 # добавление очков в пользователя
                 achiv_progress.update({
-                    achivment['achiv_ID']: int(achiv_progress.child(str(achivment['achiv_ID'])).get()) + 1
+                    achivment['achiv_ID']: str(int(achiv_progress.child(str(achivment['achiv_ID'])).get()) + 1)
                 })
                 # добавление очков в достижение
                 db.reference('achivments').child(str(achivment['achiv_ID'])).child('users_progress').update({
-                    user_id: int(user_progress) + 1
+                    user_id: str(int(user_progress) + 1)
                 })
                 # проверка на выполнение достижения
                 if user_progress+1>=achivment['points_need']:
@@ -438,12 +438,12 @@ class main_window(QtWidgets.QMainWindow):
 
         users_progress = {}
         for i in range(len(users)):
-            users_progress.update({str(i): 0})
+            users_progress.update({str(i): "0"})
 
         if self.ui.tableWidget_uch_in_achiv.rowCount()!=0:
             point={}
             for i in range(len(users)):
-                point.update({str(i): 0})
+                point.update({str(i): "0"})
             for i in range(self.ui.tableWidget_uch_in_achiv.rowCount()):
                 point.update({self.ui.tableWidget_uch_in_achiv.item(i,0).text(): int(self.ui.tableWidget_uch_in_achiv.item(i, 2).text())})
                 users_progress.update({ self.ui.tableWidget_uch_in_achiv.item(i,0).text() :
@@ -479,7 +479,7 @@ class main_window(QtWidgets.QMainWindow):
 
 
                     
-            db.reference('users').child( list(db.reference('users').get())[i]   ).child('achiv_progress').update( {str(achivments_count): int(achiv_progress1[id]) } )
+            db.reference('users').child( list(db.reference('users').get())[i]   ).child('achiv_progress').update( {str(achivments_count): achiv_progress1[id] } )
 
             #db.reference('users').child(i).child("achiv_progress").update(      )
         self.get_data_from_db()
@@ -525,8 +525,8 @@ class main_window(QtWidgets.QMainWindow):
             image_url = blob.public_url
         user_data = {
                 'achiv_progress':  {
-                    '0':0,
-                    '1':0
+                    '0':"0",
+                    '1':"0"
                 },
                 "all_points": 0,
                 "card_ID": 'None',
@@ -540,8 +540,8 @@ class main_window(QtWidgets.QMainWindow):
                 }
         for i in range(len(achivments)):
             achivments_list = list(achivments[i].items())
-            db.reference('users').child(login).child('achiv_progress').update({str(i):0})
-            db.reference('achivments').child(str(i)).child('users_progress').update({str(users_count):0})
+            db.reference('users').child(login).child('achiv_progress').update({str(i):"0"})
+            db.reference('achivments').child(str(i)).child('users_progress').update({str(users_count):"0"})
         db.reference("users").child(login).set(user_data)
         self.get_data_from_db()
 
@@ -587,7 +587,7 @@ class main_window(QtWidgets.QMainWindow):
             achiv_counter = 0
             for achiv_count in users_list.get('achiv_progress'):
                 # print('achiv_count',achiv_count)
-                if type(achiv_count) == str:
+                if len(achiv_count) >=6:
                     achiv_counter += 1
             self.ui.tableWidget_uch.item(i, 4).setText(str(achiv_counter))
             # часов всего
@@ -648,9 +648,10 @@ class main_window(QtWidgets.QMainWindow):
             item.setFlags(QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidget_uch.setItem(i, 4, item)
             achiv_counter=0
+            print(users_list.get('achiv_progress'))
             for achiv_count in users_list.get('achiv_progress'):
                 #print('achiv_count',achiv_count)
-                if type(achiv_count)== str:
+                if type(achiv_count)== str:  #todo len(achiv_count) >=6:
                     achiv_counter+=1
             self.ui.tableWidget_uch.item(i, 4).setText(str(achiv_counter))
             #часов всего
@@ -785,8 +786,12 @@ class main_window(QtWidgets.QMainWindow):
             item = QtWidgets.QTableWidgetItem()
             item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEnabled)
             self.achiv_info.ui.tableWidget.setItem(i, 2, item)
-            if type(achivments_list[6][1][users_list.get('user_ID')]) == str:
-                self.achiv_info.ui.tableWidget.item(i, 2).setText(str(achivments_list[4][1]))
+            if type(achivments_list[6][1][users_list.get('user_ID')]) == str: #todo len(achivments_list[6][1][users_list.get('user_ID')]) >=9:
+                if len(achivments_list[6][1][users_list.get('user_ID')]) >=9:
+                    self.achiv_info.ui.tableWidget.item(i, 2).setText(str(achivments_list[4][1]))
+                else:
+                    self.achiv_info.ui.tableWidget.item(i, 2).setText(
+                        str(achivments_list[6][1][users_list.get('user_ID')]))
             else:
                 self.achiv_info.ui.tableWidget.item(i, 2).setText(str(achivments_list[6][1][users_list.get('user_ID')]))
             #награда
@@ -794,7 +799,10 @@ class main_window(QtWidgets.QMainWindow):
             item.setFlags(QtCore.Qt.ItemIsSelectable|QtCore.Qt.ItemIsEnabled|QtCore.Qt.ItemIsEditable)
             self.achiv_info.ui.tableWidget.setItem(i, 3, item)
             if type(achivments_list[6][1][users_list.get('user_ID')]) == str:
-                self.achiv_info.ui.tableWidget.item(i, 3).setText(str(achivments_list[3][1]))
+                if len(achivments_list[6][1][users_list.get('user_ID')]) >= 9:
+                    self.achiv_info.ui.tableWidget.item(i, 3).setText(str(achivments_list[3][1]))
+                else:
+                    self.achiv_info.ui.tableWidget.item(i, 3).setText('0')
             else:
                 self.achiv_info.ui.tableWidget.item(i, 3).setText('0')
             # достижение
@@ -803,8 +811,12 @@ class main_window(QtWidgets.QMainWindow):
             item.setCheckState(QtCore.Qt.CheckState.Checked)
 
             if type(achivments_list[6][1][users_list.get('user_ID')]) == str:
-                item.setCheckState(QtCore.Qt.CheckState.Checked)
-                self.achiv_info.ui.tableWidget.setItem(i, 4, item)
+                if len(achivments_list[6][1][users_list.get('user_ID')]) >= 9:
+                    item.setCheckState(QtCore.Qt.CheckState.Checked)
+                    self.achiv_info.ui.tableWidget.setItem(i, 4, item)
+                else:
+                    item.setCheckState(QtCore.Qt.CheckState.Unchecked)
+                    self.achiv_info.ui.tableWidget.setItem(i, 4, item)
             else:
                 item.setCheckState(QtCore.Qt.CheckState.Unchecked)
                 self.achiv_info.ui.tableWidget.setItem(i, 4, item)
@@ -812,8 +824,10 @@ class main_window(QtWidgets.QMainWindow):
             item = QtWidgets.QTableWidgetItem()
             item.setFlags(QtCore.Qt.ItemIsEnabled)
             self.achiv_info.ui.tableWidget.setItem(i,5, item)
-            if type(achivments_list[6][1][users_list.get('user_ID')]) == str:
-                self.achiv_info.ui.tableWidget.item(i, 5).setText(str(achivments_list[6][1][users_list.get('user_ID')]))
+            if type(achivments_list[6][1][users_list.get('user_ID')]) == str: #todo len(achivments_list[6][1][users_list.get('user_ID')] )>=9
+                if len(achivments_list[6][1][users_list.get('user_ID')] )>=9:
+                    self.achiv_info.ui.tableWidget.item(i, 5).setText(str(achivments_list[6][1][users_list.get('user_ID')]))
+
             item = QtWidgets.QTableWidgetItem()
             item.setFlags(QtCore.Qt.ItemIsEnabled)
             self.achiv_info.ui.tableWidget.setItem(i, 6, item)
@@ -985,8 +999,8 @@ class main_window(QtWidgets.QMainWindow):
         self.uch_info.ui.groupBox.setTitle(users_list.get('name'))
         self.uch_info.ui.label_6.setText(str(users_list.get('all_points')))
         self.uch_info.ui.label_17.setText(str(users_list.get('hours')))
-        self.uch_info.ui.lineEdit_2.setText(str(users_list.get('password')))
-        self.uch_info.ui.lineEdit_3.setText(str(users_list.get('login')))
+        self.uch_info.ui.lineEdit_3.setText(str(users_list.get('password')))
+        self.uch_info.ui.lineEdit_2.setText(str(users_list.get('login')))
         #rank
         for i in range(len(rank)-1):
             if users_list.get('all_points') >= rank[i][1] and users_list.get('all_points')<1300 and  users_list.get('all_points') <= rank[i+1][1]:
