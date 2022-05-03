@@ -23,6 +23,8 @@ from firebase_admin import db
 from firebase_admin import storage
 from firebase_admin import auth
 
+
+import qrcode
 #import pyrebase
 
 
@@ -330,7 +332,7 @@ class main_window(QtWidgets.QMainWindow):
     def lesson(self):
         print("clicked")
         self.add_lessons.ui.lineEdit.clear()
-        self.add_lessons.ui.label.setText(self.sender().text())
+        self.add_lessons.setWindowTitle(self.sender().text())
         self.add_lessons.ui.lineEdit.setFocus()
         if self.sender().text()=="Посещение занятий и мастер классов":
             point=1
@@ -346,6 +348,19 @@ class main_window(QtWidgets.QMainWindow):
             point=6
         elif self.sender().text() == "Участие в фестивале":
             point=5
+
+        #qr code
+        qr_word = ''
+        for x in range(20):  # Количество символов (16)
+            qr_word = qr_word + random.choice(list(
+                '1234567890abcdefghigklmnopqrstuvyxwzABCDEFGHIGKLMNOPQRSTUVYXWZ'))  # Символы, из которых будет составлен qr-слово
+        print(qr_word)
+        img = qrcode.make(qr_word)
+        img.save("qr_code.png")
+        db.reference("pass_key").set(qr_word)
+
+
+        self.add_lessons.ui.label.setPixmap(QtGui.QPixmap("qr_code.png"))
         self.add_lessons.ui.lineEdit.returnPressed.connect(partial(self.add_point,point,self.sender().text()))
 
         self.add_lessons.displayInfo()
