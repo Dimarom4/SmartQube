@@ -628,7 +628,7 @@ class main_window(QtWidgets.QMainWindow):
         user_number = 1
         # print(users)
         for user in users:
-            print(user.get('userId'))
+            #print(user.get('userId'))
             # Добавление учеников в список
             rowPosition = self.ui.tableWidget_uch.rowCount()
 
@@ -680,7 +680,7 @@ class main_window(QtWidgets.QMainWindow):
             self.ui.tableWidget_uch.setItem(user_number - 1, 6, item)
             self.ui.tableWidget_uch.item(user_number - 1, 6).setText(str(user.get('cardId')))
 
-            print(user_number)
+            #print(user_number)
             rowPosition = self.ui.tableWidget_leaderboard.rowCount()
             if rowPosition < user_number:
                 self.ui.tableWidget_leaderboard.insertRow(rowPosition)
@@ -1061,35 +1061,29 @@ class main_window(QtWidgets.QMainWindow):
         print('user', login)
         print(self.uch_info.ui.lineEdit.text())
         self.uch_info.ui.lineEdit.setEnabled(False)
-        users = db.collection('users').stream()
+
+        users = db.collection('users').where(u'login', u'==', login).stream()
+
         # users = db.reference('users')
         # users_ref = users.child(login)
         for user in users:
-            if user.get('login') == login:
-                user.update({
-                    'cardId': int(self.uch_info.ui.lineEdit.text())
-                })
+            db.collection('users').document(user.id).update({
+                'cardId': int(self.uch_info.ui.lineEdit.text())
+            })
+            print(user.id)
         self.update_uch_data_from_db()
         # self.uch_info.ui.lineEdit.returnPressed.disconnect()
 
     # удаление карты
     def delete_card(self, login):
         print('login1', login)
-        users = db.collection('users').stream()
-        # users = db.reference('users')
-        # users_ref = users.child(login)
+        users = db.collection('users').where(u'login', u'==', login).stream()
+
         for user in users:
-            if user.get('login') == login:
-                user.update({
-                    'cardId': 'None'
-                })
-                '''
-        users = db.reference('users')
-        users_ref = users.child(login)
-        users_ref.update({
-            'card_ID': 'None'
-        })
-        '''
+            db.collection('users').document(user.id).update({
+                'cardId': "None"
+            })
+            print(user.id)
         self.uch_info.ui.lineEdit.setText("None")
         self.update_uch_data_from_db()
 
@@ -1453,7 +1447,7 @@ class Login(QtWidgets.QMainWindow):
 
 
 def main():
-    print(QtWidgets.QStyleFactory.keys())
+    #print(QtWidgets.QStyleFactory.keys())
     app = QtWidgets.QApplication(sys.argv)
     #app.setStyle(QStyleFactory.create('Fusion'))
     application = main_window()
@@ -1516,7 +1510,7 @@ class Login(QtWidgets.QMainWindow):
 
         self.ui.pushButton.clicked.connect(self.pass_reg)
 
-
+'''
 def main():
     app = QtWidgets.QApplication(sys.argv)
 
@@ -1530,3 +1524,4 @@ def main():
 if __name__ == '__main__':  # Если мы запускаем файл напрямую, а не импортируем
 
     main()  # то запускаем функцию main()
+'''
