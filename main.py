@@ -33,24 +33,24 @@ import qrcode
 
 # Fetch the service account key JSON file contents
 cred = credentials.Certificate('new_cubsappkotlin-firebase-adminsdk-ovpmb-f533780929.json')
-firebase_admin.initialize_app(cred)
+firebase_admin.initialize_app(cred,{'storageBucket':'cubsappkotlin.appspot.com'})
 
 db = firestore.client()
 
-cred = credentials.Certificate('cubapp-cd4ba-firebase-adminsdk-7xaqh-5688a100f9.json')
+#cred = credentials.Certificate('cubapp-cd4ba-firebase-adminsdk-7xaqh-5688a100f9.json')
 
 '''
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://cubapp-cd4ba-default-rtdb.firebaseio.com/',
-    'storageBucket':'cubapp-cd4ba.appspot.com'
+    'storageBucket':'cubsappkotlin.appspot.com'
 })
 '''
-# bucket = storage.bucket()
-# blob = bucket.blob('users_image/logo.png')
-# blob.upload_from_filename('logo.png')
-# blob.make_public()
-# url = blob.public_url
-# print(url)
+bucket = storage.bucket()
+#blob = bucket.blob('UserImages/logo1.png')
+#blob.upload_from_filename('logo1.png')
+#blob.make_public()
+#url = blob.public_url
+#print(url)
 
 
 # storage=firebase_admin.storage()
@@ -521,51 +521,67 @@ class main_window(QtWidgets.QMainWindow):
 
     # добавление нового ученика
     def add_new_uch(self):
-        users = db.reference('users').get()
-        users_count = len(users)
-        achivments = db.reference('achivments').get()
+
 
         email = self.ui.lineEdit_uch_login.text() + '@cubs.com'
         password = self.ui.lineEdit_ush_pass.text()
         login = self.ui.lineEdit_uch_login.text()
+
         user = auth.create_user(
             email=email,
             password=password)
         print("account added")
         image_url = 'None'
 
-        print("name", self.ui.lineEdit_uch_name.text())
-        print('login', login)
-        print('pass', password)
-        print('imagePath', imagePath, type(imagePath))
 
+
+
+        achivments = db.collection('achivments').stream()
+        achiv_progress={}
+        for achivment in achivments:
+            achiv_id=achivment.get("achivID")
+            print(achiv_id)
+            achiv_progress[achiv_id]="0"
+        print(achiv_progress)
+        user_id = ''
+        for x in range(16):  # Количество символов (16)
+            user_id = user_id + random.choice(list(
+                '1234567890abcdefghigklmnopqrstuvyxwzABCDEFGHIGKLMNOPQRSTUVYXWZ'))  # Символы, из которых будет составлен пароль
+
+
+        print('imagePath', user_imagePath, type(user_imagePath))
         # print(storage.child("users_image/logo.png").get_url(user['idToken']))
-        if imagePath != '':
+        if user_imagePath != '':
             print("put in db")
-            blob = bucket.blob("users_image/user_" + str(users_count + 1) + ".png")
-            blob.upload_from_filename(imagePath)
+            blob = bucket.blob("UserImages/user_" + user_id + ".png")
+            blob.upload_from_filename(user_imagePath)
             blob.make_public()
             image_url = blob.public_url
+
         user_data = {
-            'achiv_progress': {
-                '0': "0",
-                '1': "0"
-            },
-            "all_points": 0,
-            "card_ID": 'None',
+            'achivProgress': achiv_progress,
+            "cart": {},
+            "likes": {},
+            "orders": {},
+            "allPoints": 0,
+            "cardId": 'None',
             "hours": 0,
             "login": login,
             "name": self.ui.lineEdit_uch_name.text(),
             "password": password,
             "points": 0,
-            "user_ID": users_count,
-            "user_image_URL": image_url
+            "userId": user_id,
+            "userImageUrl": image_url,
+            "userType":"CUSTOMER"
         }
+        db.collection('users').add( user_data)
+        '''
         for i in range(len(achivments)):
             achivments_list = list(achivments[i].items())
             db.reference('users').child(login).child('achiv_progress').update({str(i): "0"})
             db.reference('achivments').child(str(i)).child('users_progress').update({str(users_count): "0"})
         db.reference("users").child(login).set(user_data)
+        '''
         self.get_data_from_db()
 
         # storage.child("users_image/logo.png").put(imagePath)   #put('logo1.png')
@@ -1049,7 +1065,7 @@ class main_window(QtWidgets.QMainWindow):
                 if url_image == "None":
                     self.uch_info.ui.label.setPixmap(QtGui.QPixmap('logo.png'))
                 else:
-                    image.loadFromData(urlopen('https://www.sunhome.ru/i/wallpapers/73/krasnoe-selo.orig.jpg').read())
+                    image.loadFromData(urlopen(url_image).read())
                     self.uch_info.ui.label.setPixmap(QtGui.QPixmap(image))
 
                 # self.uch_info.ui.lineEdit.returnPressed.connect(partial(self.enable_card, users_list.get('login')))
@@ -1140,16 +1156,17 @@ class main_window(QtWidgets.QMainWindow):
     def browseImage_2(self):
         print("clicked")
         fname = QFileDialog.getOpenFileName(self, 'open file', 'c\\', 'Image files (*.jpg *.png)')
-        global user_imagePath
-        user_imagePath = fname[0]
-        self.ui.label_achiv_image_2.setPixmap(QtGui.QPixmap(user_imagePath))
+        global imagePath
+        imagePath = fname[0]
+        self.ui.label_achiv_image_2.setPixmap(QtGui.QPixmap(imagePath))
 
     def browseImage_3(self):
         print("clicked")
         fname = QFileDialog.getOpenFileName(self, 'open file', 'c\\', 'Image files (*.jpg *.png)')
-        global imagePath
-        imagePath = fname[0]
-        self.ui.label_user_image_2.setPixmap(QtGui.QPixmap(imagePath))
+        global user_imagePath
+        user_imagePath = fname[0]
+        self.ui.label_user_image_2.setPixmap(QtGui.QPixmap(user_imagePath))
+
 
     # поиск учеников
     def search_uch(self):
