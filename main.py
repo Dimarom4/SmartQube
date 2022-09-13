@@ -98,34 +98,32 @@ class uch_to_achiv(QtWidgets.QMainWindow):
         self.get_data()
 
     def get_data(self):
-        users = db.reference('users').get()
-        # print(users)
+        users = db.collection('users').stream()
 
-        users_count = len(users)
-        for i in range(users_count):
-            lenght = self.ui.tableWidget.rowCount()
-            # print(lenght)
+        user_number = 1
+        # print(users)
+        for user in users:
             rowPosition = self.ui.tableWidget.rowCount()
-            # print(rowPosition)
-            if rowPosition < users_count:
+
+            if rowPosition < user_number:
                 self.ui.tableWidget.insertRow(rowPosition)
 
-            users_list = users.get(list(users.keys())[i])
             # добавление данных в ячейки
             # ID
             item = QtWidgets.QTableWidgetItem()
             item.setFlags(QtCore.Qt.ItemIsEnabled)
-            self.ui.tableWidget.setItem(i, 1, item)
-            self.ui.tableWidget.item(i, 1).setText(str(users_list.get('user_ID')))
+            self.ui.tableWidget.setItem(user_number-1, 1, item)
+            self.ui.tableWidget.item(user_number-1, 1).setText(str(user.get('userId')))
             # Фио
             item = QtWidgets.QTableWidgetItem()
             item.setFlags(QtCore.Qt.ItemIsEnabled)
-            self.ui.tableWidget.setItem(i, 0, item)
-            self.ui.tableWidget.item(i, 0).setText(users_list.get('name'))
+            self.ui.tableWidget.setItem(user_number-1, 0, item)
+            self.ui.tableWidget.item(user_number-1, 0).setText(user.get('name'))
             item = QtWidgets.QTableWidgetItem()
             item.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsUserCheckable)
             item.setCheckState(QtCore.Qt.Unchecked)
-            self.ui.tableWidget.setItem(i, 2, item)
+            self.ui.tableWidget.setItem(user_number-1, 2, item)
+            user_number+=1
 
     # проверка на отмеченные клетки
     def handleItemClicked(self, item):
@@ -452,21 +450,20 @@ class main_window(QtWidgets.QMainWindow):
         points_need = self.ui.spinBox_reward_search_3.value()
         image_url = 'None'
 
-        users = db.reference('users').get()
-        achivments = db.reference('achivments').get()
-        achivments_count = len(achivments)
+
+
         point = 0
-        if user_imagePath != '':
-            blob = bucket.blob("achivments_image/achivments_" + str(achivments_count + 1) + ".png")
-            blob.upload_from_filename(user_imagePath)
+        achiv_id = ''
+        for x in range(16):  # Количество символов (16)
+            achiv_id = achiv_id + random.choice(list(
+                '1234567890abcdefghigklmnopqrstuvyxwzABCDEFGHIGKLMNOPQRSTUVYXWZ'))  # Символы, из которых будет составлен пароль
+        if imagePath != '':
+            blob = bucket.blob("Achivments/achivments_" + achiv_id + ".png")
+            blob.upload_from_filename(imagePath)
             blob.make_public()
             image_url = blob.public_url
 
-        users_progress = {}
-        for i in range(len(users)):
-            users_progress.update({str(i): "0"})
-
-        if self.ui.tableWidget_uch_in_achiv.rowCount() != 0:
+        if self.ui.tableWidget_uch_in_achiv.rowCount() != 0: #todo переделать добавление очков
             point = {}
             for i in range(len(users)):
                 point.update({str(i): "0"})
@@ -481,21 +478,26 @@ class main_window(QtWidgets.QMainWindow):
                 print(self.ui.tableWidget_uch_in_achiv.item(i, 2).text())
 
         if self.ui.spinBox_reward_search_2.isEnabled():
-            print('value', self.ui.spinBox_reward_search_2.value())
             point = int(self.ui.spinBox_reward_search_2.value())
 
         achivment_data = {
-            'achiv_ID': achivments_count,
-            'achiv_image_URL': image_url,
+            'achivID': achiv_id,
+            'achivImageURL': image_url,
             'name': name,
             'point': point,
-            'points_need': points_need,
-            'type': type,
-            'users_progress': users_progress
+            'pointsNeed': points_need,
+            'type': type
         }
 
-        db.reference("achivments").child(str(achivments_count)).set(achivment_data)
-        print(achivment_data)
+        db.collection('achivments').add(achivment_data)
+        users = db.collection('users').stream()
+        for user in users:
+            db.collection('users').document(user.id).set({
+                'achivProgress':{
+                    achiv_id:"0"
+                }
+         }, merge=True)
+        '''
         achiv_progress1 = db.reference('achivments').child(str(achivments_count)).child('users_progress').get()
         print('achiv_progress1', achiv_progress1)
 
@@ -509,6 +511,7 @@ class main_window(QtWidgets.QMainWindow):
                 {str(achivments_count): achiv_progress1[id]})
 
             # db.reference('users').child(i).child("achiv_progress").update(      )
+        '''
         self.get_data_from_db()
 
     # генерация пароля
@@ -533,15 +536,13 @@ class main_window(QtWidgets.QMainWindow):
         print("account added")
         image_url = 'None'
 
-
-
-
         achivments = db.collection('achivments').stream()
         achiv_progress={}
         for achivment in achivments:
             achiv_id=achivment.get("achivID")
             print(achiv_id)
             achiv_progress[achiv_id]="0"
+
         print(achiv_progress)
         user_id = ''
         for x in range(16):  # Количество символов (16)
@@ -575,6 +576,7 @@ class main_window(QtWidgets.QMainWindow):
             "userType":"CUSTOMER"
         }
         db.collection('users').add( user_data)
+
         '''
         for i in range(len(achivments)):
             achivments_list = list(achivments[i].items())
@@ -1364,36 +1366,31 @@ class main_window(QtWidgets.QMainWindow):
         print("update_messages")
         # само сообщение
         print(message_a)
-
         self.message_a = message_a
         # Изменение количества строк
-        lenght = self.ui.tableWidget_uch_in_achiv.rowCount()
 
-        print(lenght)
         self.ui.tableWidget_uch_in_achiv.setRowCount(len(message_a))
         lenght = self.ui.tableWidget_uch_in_achiv.rowCount()
 
-        print(lenght)
-
-        users = db.reference('users').get()
-        users_count = len(users)
+        #users = db.reference('users').get()
+        #users_count = len(users)
 
         find_id = ''
         user_name = ''
         # Изменение текста в итеме
         for i in range(lenght):
-            print("i=", i)
             print(message_a[i])
             item = QtWidgets.QTableWidgetItem()
             item.setFlags(QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidget_uch_in_achiv.setItem(i, 1, item)
             self.ui.tableWidget_uch_in_achiv.item(i, 1).setText(message_a[i])
 
-            for j in range(users_count):
-                if db.reference('users').child(users.get(list(users.keys())[j]).get('login')).child(
-                        "name").get() == (message_a[i]):
-                    find_id = db.reference('users').child(users.get(list(users.keys())[j]).get('login')).child(
-                        "user_ID").get()
+
+            users=db.collection('users').where(u'name', u'==', message_a[i]).stream()
+            for user in users:
+                find_id= user.id
+            print('find_id',find_id)
+
             item = QtWidgets.QTableWidgetItem()
             item.setFlags(QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidget_uch_in_achiv.setItem(i, 0, item)
