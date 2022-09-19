@@ -50,6 +50,8 @@ class Ui_MainWindow(object):
         self.lineEdit_uch_search.setObjectName("lineEdit_uch_search")
         self.gridLayout_6.addWidget(self.lineEdit_uch_search, 2, 0, 1, 1)
         self.tableWidget_uch = QtWidgets.QTableWidget(self.tab_ucheniki)
+        self.tableWidget_uch.setEnabled(True)
+        self.tableWidget_uch.setAutoFillBackground(False)
         self.tableWidget_uch.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.tableWidget_uch.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.tableWidget_uch.setLineWidth(1)
@@ -409,7 +411,7 @@ class Ui_MainWindow(object):
         self.label_uch_login.setBuddy(self.lineEdit_uch_login)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         self.checkBox_achiv_type_2.toggled['bool'].connect(self.spinBox_reward_search_2.setEnabled) # type: ignore
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -511,3 +513,13 @@ class Ui_MainWindow(object):
         self.pushButton_club_3.setText(_translate("MainWindow", "Клубное событие 3 уровня"))
         self.pushButton_festival.setText(_translate("MainWindow", "Участие в фестивале"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.lessons), _translate("MainWindow", "Посещение"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())

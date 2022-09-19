@@ -366,7 +366,7 @@ class main_window(QtWidgets.QMainWindow):
         print(qr_word)
         img = qrcode.make(qr_word)
         img.save("qr_code.png")
-        db.reference("pass_key").set(qr_word)
+        #db.reference("pass_key").set(qr_word) #todo add qr code in db
 
         self.add_lessons.ui.label.setPixmap(QtGui.QPixmap("qr_code.png"))
         self.add_lessons.ui.lineEdit.returnPressed.connect(partial(self.add_point, point, self.sender().text()))
@@ -375,13 +375,14 @@ class main_window(QtWidgets.QMainWindow):
 
     def add_point(self, point, achiv_text):
         print('point', point, achiv_text)
+        '''
         user = db.reference('users').order_by_child('card_ID').equal_to(int(self.add_lessons.ui.lineEdit.text())).get()
         login = list(user)[0]
 
         users = db.reference('users')
         users_ref = users.child(login)
         user_id = users_ref.child("user_ID").get()
-
+        '''
         achiv_search = 'None'
         # self.get_data_from_db()
         if achiv_text == "Посещение занятий и мастер классов":
@@ -402,8 +403,33 @@ class main_window(QtWidgets.QMainWindow):
             achiv_search = "Участвовать в помощи клубу 1"
         elif achiv_text == "Участие в фестивале":
             achiv_search = "Принять участие в фестивале"
-        self.add_lessons.ui.lineEdit.clear()
 
+        achivments = db.collection('achivments').stream()
+
+        for achiv in achivments:
+            if achiv.get('name').startswith(achiv_search)  :
+
+                achivID=achiv.get('achivID')
+                users = db.collection('users').stream()
+                for user in users:
+                    #Просто добавление очков
+                    if len(user.get('achivProgress').get(  achivID)) <=6:
+                        db.collection('users').document(user.id).update({
+                            'achivProgress.'+ achivID :   str(int(user.get('achivProgress').get( achivID))+1)
+                        })
+                    #Изменение на дату если очки набраны
+                    if user.get('achivProgress').get(  achivID) == str(achiv.get('pointsNeed')-1):
+                        db.collection('users').document(user.id).update({
+                            'achivProgress.' + achivID: str(datetime.today().day) + '.' + str(datetime.today().month) + '.' + str(
+                            datetime.today().year)
+                        })
+
+
+
+
+
+
+        '''
         achiv_progress = users_ref.child('achiv_progress')
         achivments = db.reference('achivments').get()
 
@@ -419,10 +445,6 @@ class main_window(QtWidgets.QMainWindow):
                 achiv_progress.update({
                     achivment['achiv_ID']: str(int(achiv_progress.child(str(achivment['achiv_ID'])).get()) + 1)
                 })
-                # добавление очков в достижение
-                db.reference('achivments').child(str(achivment['achiv_ID'])).child('users_progress').update({
-                    user_id: str(int(user_progress) + 1)
-                })
                 # проверка на выполнение достижения
                 if user_progress + 1 >= achivment['points_need']:
                     achiv_progress.update({
@@ -434,11 +456,18 @@ class main_window(QtWidgets.QMainWindow):
                             datetime.today().year)
                     })
                     point += achivment['point']
+        '''
 
-        users_ref.update({
-            'all_points': int(users_ref.child('all_points').get()) + point,
-            'points': int(users_ref.child('points').get()) + point
-        })
+        users = db.collection('users').where(u'cardId', u'==',int(self.add_lessons.ui.lineEdit.text())).stream()
+        self.add_lessons.ui.lineEdit.clear()
+        for user in users:
+            print(user.id)
+            db.collection('users').document(user.id).update({
+                'allPoints': int(user.get('allPoints')) + point,
+                'points': int(user.get('points')) + point,
+                'hours':int(user.get('hours')) + 1
+            })
+
         self.get_data_from_db()
 
     # добавление нового достижения
@@ -1086,7 +1115,7 @@ class main_window(QtWidgets.QMainWindow):
         # users_ref = users.child(login)
         for user in users:
             db.collection('users').document(user.id).update({
-                'cardId': int(self.uch_info.ui.lineEdit.text())
+                'cardId': self.uch_info.ui.lineEdit.text()
             })
             print(user.id)
         self.update_uch_data_from_db()
