@@ -593,6 +593,7 @@ class main_window(QtWidgets.QMainWindow):
             "cart": {},
             "likes": {},
             "orders": {},
+            "addresses":{},
             "allPoints": 0,
             "cardId": 'None',
             "hours": 0,
