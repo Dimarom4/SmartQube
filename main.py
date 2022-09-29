@@ -29,7 +29,7 @@ from firebase_admin import firestore
 
 import qrcode
 
-# import pyrebase
+
 
 
 # Fetch the service account key JSON file contents
@@ -384,7 +384,9 @@ class main_window(QtWidgets.QMainWindow):
         print(qr_word)
         img = qrcode.make(qr_word)
         img.save("qr_code.png")
-        #db.reference("pass_key").set(qr_word) #todo add qr code in db
+        db.collection('lessons').document('qrCode').update({
+            'qrCode':qr_word
+        }) #todo add qr code in db
 
         self.add_lessons.ui.label.setPixmap(QtGui.QPixmap("qr_code.png"))
         self.add_lessons.ui.lineEdit.returnPressed.connect(partial(self.add_point, point, self.sender().text()))
