@@ -5,7 +5,7 @@ executables = [Executable('main.py',
                           base="Win32GUI",
                           icon='logo1.ico'
                           )]
-zip_include_packages = ['PyQt5']
+zip_include_packages = ['PyQt5','numpy']
 options = {
     'build_exe': {
         'includes' : ['Login'],
@@ -15,8 +15,8 @@ options = {
     }
 }
 setup(name='Cubic',
-      version='0.0.3',
-      description='pre_alpha_test',
+      version='0.0.4',
+      description='Пре-альфа тестирование',
       executables=executables,
       options=options
       )

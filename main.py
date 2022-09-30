@@ -242,17 +242,20 @@ class uch_info(QtWidgets.QMainWindow):
         print("closed")
         try:
             self.ui.lineEdit.returnPressed.disconnect()
-
         except Exception:
             pass
-        try:
 
+        try:
             self.ui.pushButton.clicked.disconnect()
-
         except Exception:
             pass
-        try:
 
+        try:
+            self.ui.pushButton_13.clicked.disconnect()
+        except Exception:
+            pass
+
+        try:
             self.ui.pushButton_2.clicked.disconnect()
         except Exception:
             pass
