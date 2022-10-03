@@ -1,5 +1,7 @@
 import sys  # sys нужен для передачи argv в QApplication
 # import requests
+import os
+
 from urllib.request import urlopen
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtWidgets import QMessageBox, QFileDialog, QStyleFactory,QTableView
@@ -29,8 +31,15 @@ from firebase_admin import firestore
 
 import qrcode
 
+import psutil
+count=0
+for proc in psutil.process_iter():
+    name = proc.name()
 
-
+    if name == "cubic.exe":
+        count+=1
+    if count>1:
+        exit()
 
 # Fetch the service account key JSON file contents
 cred = credentials.Certificate('new_cubsappkotlin-firebase-adminsdk-ovpmb-f533780929.json')
@@ -346,6 +355,7 @@ class main_window(QtWidgets.QMainWindow):
     #закрытие уроков и обновление бд
     def add_lessons_close(self):
         self.update_uch_data_from_db()
+        os.remove('qr_code.png')
         self.add_lessons.close()
     #Функция для одноразового запуска другой функции
     def run_once(self,f):
@@ -418,14 +428,11 @@ class main_window(QtWidgets.QMainWindow):
             achiv_search = "Участвовать в помощи клубу 1"
         elif achiv_text == "Участие в фестивале":
             achiv_search = "Принять участие в фестивале"
-        start = datetime.now()
-
-        #achiv_search_end=achiv_search[:-1]+chr(ord(achiv_search[-1])+1)
 
         achivments = db.collection('achivments').where('name', u'>',achiv_search).where('name', u'<', achiv_search+'я' ).stream()
         users = db.collection('users').where(u'cardId', u'==', self.add_lessons.ui.lineEdit.text()).stream()
 
-
+        start = datetime.now()
         update_data={}
         for user in users:
             update_data={
@@ -433,12 +440,9 @@ class main_window(QtWidgets.QMainWindow):
                 'points': int(user.get('points')) + point,
                 'hours': int(user.get('hours')) + 1
             }
-
             for achiv in achivments:
-
                 achivID = achiv.get('achivID')
                 achiv_progress= user.get('achivProgress').get(achivID)
-
                 if len(achiv_progress) <=6:
                     update_data['achivProgress.'+ achivID]=str(int(achiv_progress)+1)
                     #Изменение на дату если очки набраны
@@ -447,7 +451,7 @@ class main_window(QtWidgets.QMainWindow):
                             datetime.today().year)
 
             db.collection('users').document(user.id).update(update_data)
-            print(datetime.now() - start)
+            print(user.get('cardId'),datetime.now() - start)
 
 
         self.add_lessons.ui.lineEdit.clear()
@@ -510,21 +514,6 @@ class main_window(QtWidgets.QMainWindow):
                     achiv_id:"0"
                 }
          }, merge=True)
-        '''
-        achiv_progress1 = db.reference('achivments').child(str(achivments_count)).child('users_progress').get()
-        print('achiv_progress1', achiv_progress1)
-
-        for i in range(len(achiv_progress1)):
-            print(list(db.reference('users').get())[i])
-            users_list = users.get(list(users.keys())[i])
-            id = users_list.get('user_ID')
-            print('ID', id, list(db.reference('users').get())[i])
-
-            db.reference('users').child(list(db.reference('users').get())[i]).child('achiv_progress').update(
-                {str(achivments_count): achiv_progress1[id]})
-
-            # db.reference('users').child(i).child("achiv_progress").update(      )
-        '''
         self.update_uch_data_from_db()
 
     # генерация пароля
@@ -796,6 +785,13 @@ class main_window(QtWidgets.QMainWindow):
             achiv_number += 1
 
         print(datetime.now() - start)
+        #Экранчик перед запуском
+        try:
+            import pyi_splash
+            pyi_splash.update_text('UI Loaded ...')
+            pyi_splash.close()
+        except:
+            pass
 
     # открытие карточки достижения
     def open_achiv_Window(self):
