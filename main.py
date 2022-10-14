@@ -1,6 +1,7 @@
 import sys  # sys нужен для передачи argv в QApplication
 # import requests
 import os
+import time
 
 from urllib.request import urlopen
 from PyQt5 import QtWidgets, QtGui, QtCore
@@ -281,7 +282,7 @@ class add_lessons(QtWidgets.QMainWindow):
 
         self.ui = Ui_lessons()
         self.ui.setupUi(self)
-
+        self.ui.label_3.hide()
     def closeEvent(self, a0: QtGui.QCloseEvent) :
         print("closed")
         #main_window() #todo добиться человеческого вызова при закрытии
@@ -408,6 +409,9 @@ class main_window(QtWidgets.QMainWindow):
 
     def add_point(self, point, achiv_text):
 
+        self.add_lessons.movie = QtGui.QMovie("Loading.gif")
+        self.add_lessons.ui.label_3.show()
+        QtCore.QCoreApplication.processEvents()
 
         achiv_search = 'None'
         if achiv_text == "Посещение занятий и мастер классов":
@@ -453,7 +457,7 @@ class main_window(QtWidgets.QMainWindow):
             db.collection('users').document(user.id).update(update_data)
             print(user.get('cardId'),datetime.now() - start)
 
-
+        self.add_lessons.ui.label_3.hide()
         self.add_lessons.ui.lineEdit.clear()
 
         #self.update_uch_data_from_db()
