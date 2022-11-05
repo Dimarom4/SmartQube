@@ -41,7 +41,7 @@ for proc in psutil.process_iter():
         count+=1
     if count>1:
         exit()
-
+print("programm start")
 # Fetch the service account key JSON file contents
 cred = credentials.Certificate('new_cubsappkotlin-firebase-adminsdk-ovpmb-f533780929.json')
 firebase_admin.initialize_app(cred,{'storageBucket':'cubsappkotlin.appspot.com'})
@@ -311,6 +311,7 @@ class main_window(QtWidgets.QMainWindow):
 
     def __init__(self, parent=None):
         # инициализация мейна
+        print('main window ini')
         super(main_window, self).__init__(parent)
         self.achiv_info = achiv_info()
         self.uch_info = uch_info()
@@ -398,8 +399,8 @@ class main_window(QtWidgets.QMainWindow):
         print(qr_word)
         img = qrcode.make(qr_word)
         img.save("qr_code.png")
-        db.collection('lessons').document('qrCode').update({
-            'qrCode':qr_word
+        db.collection('visits').document('qrCodes').update({
+            'cabinet1':qr_word
         }) #todo add qr code in db
 
         self.add_lessons.ui.label.setPixmap(QtGui.QPixmap("qr_code.png"))
@@ -1477,6 +1478,7 @@ class Login(QtWidgets.QMainWindow):
 
 
 def main():
+    print('main')
     #print(QtWidgets.QStyleFactory.keys())
     app = QtWidgets.QApplication(sys.argv)
     #app.setStyle(QStyleFactory.create('Fusion'))
