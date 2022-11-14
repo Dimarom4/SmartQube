@@ -331,6 +331,9 @@ class main_window(QtWidgets.QMainWindow):
 
         self.ui.pushButton_select_image_3.clicked.connect(self.browseImage_3)
         self.ui.pushButton_delete_image_2.clicked.connect(self.delete_image_3)
+
+        self.ui.pushButton.clicked.connect(self.browseImage_4)
+        self.ui.pushButton_2.clicked.connect(self.delete_image_4)
         # поиск
         self.ui.pushButton_uch_search.clicked.connect(self.search_uch)
         self.ui.pushButton_achiv_search.clicked.connect(self.search_achiv)
@@ -353,6 +356,55 @@ class main_window(QtWidgets.QMainWindow):
         self.ui.pushButton_help_2.clicked.connect(self.lesson)
         self.ui.pushButton_help_3.clicked.connect(self.lesson)
         self.ui.pushButton_festival.clicked.connect(self.lesson)
+        # мероприятия
+        self.ui.pushButton_3.clicked.connect(self.save_event)
+
+        self.ui.pushButton_4.clicked.connect(self.A)
+
+    def A(self):
+        self.ui.groupBox = QtWidgets.QGroupBox(self.ui.scrollAreaWidgetContents)
+        self.ui.groupBox.setObjectName("groupBox")
+        self.ui.groupBox.setTitle( "Жопа")
+        print(self.ui.gridLayout_8.count())
+        if self.ui.gridLayout_8.count()%3==0:
+            self.ui.gridLayout_8.addWidget(self.ui.groupBox, self.ui.gridLayout_8.rowCount(),
+                                           0, 1, 1)
+        else:
+            self.ui.gridLayout_8.addWidget(self.ui.groupBox, self.ui.gridLayout_8.rowCount()-1 ,
+                                           self.ui.gridLayout_8.count()%3, 1, 1)
+
+    def save_event(self):
+
+
+        events=db.collection('events')
+
+        id = ''
+        for x in range(16):  # Количество символов (16)
+            id = id + random.choice(list(
+                '1234567890abcdefghigklmnopqrstuvyxwzABCDEFGHIGKLMNOPQRSTUVYXWZ'))
+
+        image_url = 'None'
+        if imagePath != '':
+            blob = bucket.blob("/Events" + id + ".png")
+            blob.upload_from_filename(imagePath)
+            blob.make_public()
+            image_url = blob.public_url
+
+        images=[image_url]
+        data={
+            'date':self.ui.calendarWidget.selectedDate().toString('dd.MM.yyyy'),
+            'description':self.ui.textEdit.toPlainText(),
+            'name': self.ui.lineEdit.text(),
+            'eventId':'event-by-'+id,
+            'images':images
+        }
+        events.add(data)
+
+        #clean
+        self.ui.calendarWidget.clean()
+        self.ui.textEdit.clean()
+        self.ui.lineEdit.clean()
+        print('saved event')
 
     #закрытие уроков и обновление бд
     def add_lessons_close(self):
@@ -557,7 +609,7 @@ class main_window(QtWidgets.QMainWindow):
                 '1234567890abcdefghigklmnopqrstuvyxwzABCDEFGHIGKLMNOPQRSTUVYXWZ'))  # Символы, из которых будет составлен пароль
 
 
-        print('imagePath', user_imagePath, type(user_imagePath))
+        #print('imagePath', user_imagePath, type(user_imagePath))
         # print(storage.child("users_image/logo.png").get_url(user['idToken']))
         if user_imagePath != '':
             print("put in db")
@@ -788,6 +840,48 @@ class main_window(QtWidgets.QMainWindow):
 
 
             achiv_number += 1
+        print(datetime.now() - start)
+        #Меропрития
+        events=db.collection('events').stream()
+        count=0
+        for event in events:
+            #if self.ui.gridLayout_8.count()
+            self.ui.groupBox = QtWidgets.QGroupBox(self.ui.scrollAreaWidgetContents)
+            self.ui.groupBox.setObjectName("groupBox")
+            self.ui.groupBox.setTitle(event.get('name'))
+
+            self.ui.gridLayout_9 = QtWidgets.QGridLayout(self.ui.groupBox)
+            self.ui.label_8 = QtWidgets.QLabel(self.ui.groupBox)
+            self.ui.label_8.setObjectName("label_8")
+            self.ui.label_8.setText("описание:\n"+ event.get('description'))
+            self.ui.gridLayout_9.addWidget(self.ui.label_8, 2, 0, 1, 1)
+            self.ui.label_7 = QtWidgets.QLabel(self.ui.groupBox)
+            self.ui.label_7.setText("")
+
+            #image = QtGui.QImage() #TODO раскоментить(долго чекать просто)
+            #url_image = event.get("images")[0]
+            #print(url_image)
+            #image.loadFromData(urlopen(url_image).read())
+            #self.ui.label_7.setPixmap(QtGui.QPixmap(image))
+
+            self.ui.label_7.setObjectName("label_7")
+            self.ui.gridLayout_9.addWidget(self.ui.label_7, 0, 0, 1, 1)
+            self.ui.label_6 = QtWidgets.QLabel(self.ui.groupBox)
+            self.ui.label_6.setObjectName("label_6")
+            self.ui.label_6.setText("Дата: "+ event.get('date'))
+            self.ui.gridLayout_9.addWidget(self.ui.label_6, 1, 0, 1, 1)
+
+
+
+
+            print(self.ui.gridLayout_8.count())
+            if self.ui.gridLayout_8.count() % 3 == 0:
+                self.ui.gridLayout_8.addWidget(self.ui.groupBox, self.ui.gridLayout_8.rowCount(),
+                                               0, 1, 1)
+            else:
+                self.ui.gridLayout_8.addWidget(self.ui.groupBox, self.ui.gridLayout_8.rowCount() - 1,
+                                               self.ui.gridLayout_8.count() % 3, 1, 1)
+
 
         print(datetime.now() - start)
         #Экранчик перед запуском
@@ -1073,6 +1167,13 @@ class main_window(QtWidgets.QMainWindow):
                         self.uch_info.ui.progressBar.setValue(
                             int(100 - (rank[i + 1][1] - user.get('allPoints')) * 100 / (rank[i + 1][1] - rank[i][1])))
                         break
+                self.uch_info.ui.lineEdit_2.setEchoMode(QtWidgets.QLineEdit.Password)
+                self.uch_info.ui.lineEdit_3.setEchoMode(QtWidgets.QLineEdit.Password)
+                self.uch_info.ui.lineEdit_2.setReadOnly(True)
+                self.uch_info.ui.lineEdit_3.setReadOnly(True)
+                self.uch_info.ui.pushButton_13.setText("Показать логин и пароль")
+                self.uch_info.ui.lineEdit_2.setEnabled(False)
+                self.uch_info.ui.lineEdit_3.setEnabled(False)
                 self.uch_info.ui.pushButton_13.clicked.connect(self.toggle_password)
                 self.uch_info.ui.lineEdit.setText(str(user.get('cardId')))
                 self.uch_info.ui.pushButton.clicked.connect(partial(self.enable_card, user.get('login')))
@@ -1148,7 +1249,6 @@ class main_window(QtWidgets.QMainWindow):
             self.uch_info.ui.lineEdit_3.setEchoMode(QtWidgets.QLineEdit.Password)
             self.uch_info.ui.lineEdit_2.setReadOnly(True)
             self.uch_info.ui.lineEdit_3.setReadOnly(True)
-
             self.uch_info.ui.pushButton_13.setText("Показать логин и пароль")
             self.uch_info.ui.lineEdit_2.setEnabled(False)
             self.uch_info.ui.lineEdit_3.setEnabled(False)
@@ -1171,6 +1271,13 @@ class main_window(QtWidgets.QMainWindow):
         # imagePath = fname[0]
         self.ui.label_user_image_2.setPixmap(QtGui.QPixmap('logo.png'))
 
+    def delete_image_4(self):
+        print("clicked")
+        # fname = QFileDialog.getOpenFileName(self, 'open file', 'c\\', 'Image files (*.jpg *.png)')
+        # imagePath = fname[0]
+        self.ui.label_5.setPixmap(QtGui.QPixmap('logo.png'))
+
+
     # выбор картинки
     def browseImage_2(self):
         print("clicked")
@@ -1186,6 +1293,12 @@ class main_window(QtWidgets.QMainWindow):
         user_imagePath = fname[0]
         self.ui.label_user_image_2.setPixmap(QtGui.QPixmap(user_imagePath))
 
+    def browseImage_4(self):
+        print("clicked")
+        fname = QFileDialog.getOpenFileName(self, 'open file', 'c\\', 'Image files (*.jpg *.png)')
+        global imagePath
+        imagePath = fname[0]
+        self.ui.label_5.setPixmap(QtGui.QPixmap(imagePath))
 
     # поиск учеников
     def search_uch(self):
