@@ -359,20 +359,9 @@ class main_window(QtWidgets.QMainWindow):
         # мероприятия
         self.ui.pushButton_3.clicked.connect(self.save_event)
 
-        self.ui.pushButton_4.clicked.connect(self.A)
 
-    def A(self):
-        self.ui.groupBox = QtWidgets.QGroupBox(self.ui.scrollAreaWidgetContents)
-        self.ui.groupBox.setObjectName("groupBox")
-        self.ui.groupBox.setTitle( "Жопа")
-        print(self.ui.gridLayout_8.count())
-        if self.ui.gridLayout_8.count()%3==0:
-            self.ui.gridLayout_8.addWidget(self.ui.groupBox, self.ui.gridLayout_8.rowCount(),
-                                           0, 1, 1)
-        else:
-            self.ui.gridLayout_8.addWidget(self.ui.groupBox, self.ui.gridLayout_8.rowCount()-1 ,
-                                           self.ui.gridLayout_8.count()%3, 1, 1)
 
+    #добавление ивента в БД
     def save_event(self):
 
 
@@ -453,7 +442,7 @@ class main_window(QtWidgets.QMainWindow):
         img.save("qr_code.png")
         db.collection('visits').document('qrCodes').update({
             'cabinet1':qr_word
-        }) #todo add qr code in db
+        })
 
         self.add_lessons.ui.label.setPixmap(QtGui.QPixmap("qr_code.png"))
         self.add_lessons.ui.lineEdit.returnPressed.connect(partial(self.add_point, point, self.sender().text()))
@@ -847,31 +836,63 @@ class main_window(QtWidgets.QMainWindow):
         for event in events:
             #if self.ui.gridLayout_8.count()
             self.ui.groupBox = QtWidgets.QGroupBox(self.ui.scrollAreaWidgetContents)
+            # политика изменения размера
+            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Fixed)
+            sizePolicy.setHorizontalStretch(0)
+            sizePolicy.setVerticalStretch(0)
+            sizePolicy.setHeightForWidth(self.ui.groupBox.sizePolicy().hasHeightForWidth())
+            self.ui.groupBox.setSizePolicy(sizePolicy)
+            self.ui.groupBox.setMinimumSize(QtCore.QSize(230, 400))
+            self.ui.groupBox.setSizeIncrement(QtCore.QSize(0, 0))
+
             self.ui.groupBox.setObjectName("groupBox")
             self.ui.groupBox.setTitle(event.get('name'))
-
             self.ui.gridLayout_9 = QtWidgets.QGridLayout(self.ui.groupBox)
+
             self.ui.label_8 = QtWidgets.QLabel(self.ui.groupBox)
+            # политика изменения размера
+            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Ignored)
+            sizePolicy.setHorizontalStretch(0)
+            sizePolicy.setVerticalStretch(0)
+            sizePolicy.setHeightForWidth(self.ui.label_8.sizePolicy().hasHeightForWidth())
+            self.ui.label_8.setSizePolicy(sizePolicy)
+            self.ui.label_8.setBaseSize(QtCore.QSize(0, 0))
+            self.ui.label_8.setTextFormat(QtCore.Qt.AutoText)
+            self.ui.label_8.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
             self.ui.label_8.setObjectName("label_8")
+            self.ui.label_8.setWordWrap(True)
             self.ui.label_8.setText("описание:\n"+ event.get('description'))
             self.ui.gridLayout_9.addWidget(self.ui.label_8, 2, 0, 1, 1)
+
             self.ui.label_7 = QtWidgets.QLabel(self.ui.groupBox)
+            # политика изменения размера
+            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Expanding)
+            sizePolicy.setHorizontalStretch(0)
+            sizePolicy.setVerticalStretch(0)
+            sizePolicy.setHeightForWidth(self.ui.label_7.sizePolicy().hasHeightForWidth())
+            self.ui.label_7.setSizePolicy(sizePolicy)
+            self.ui.label_7.setMaximumSize(QtCore.QSize(210, 210))
             self.ui.label_7.setText("")
 
-            #image = QtGui.QImage() #TODO раскоментить(долго чекать просто)
-            #url_image = event.get("images")[0]
+            image = QtGui.QImage() #TODO раскоментить(долго чекать просто)
+            url_image = event.get("images")[0]
             #print(url_image)
-            #image.loadFromData(urlopen(url_image).read())
-            #self.ui.label_7.setPixmap(QtGui.QPixmap(image))
+            image.loadFromData(urlopen(url_image).read())
+            self.ui.label_7.setPixmap(QtGui.QPixmap(image))
 
+            self.ui.label_7.setScaledContents(True)
             self.ui.label_7.setObjectName("label_7")
             self.ui.gridLayout_9.addWidget(self.ui.label_7, 0, 0, 1, 1)
+
             self.ui.label_6 = QtWidgets.QLabel(self.ui.groupBox)
+            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
+            sizePolicy.setHorizontalStretch(0)
+            sizePolicy.setVerticalStretch(0)
+            sizePolicy.setHeightForWidth(self.ui.label_6.sizePolicy().hasHeightForWidth())
+            self.ui.label_6.setSizePolicy(sizePolicy)
             self.ui.label_6.setObjectName("label_6")
             self.ui.label_6.setText("Дата: "+ event.get('date'))
             self.ui.gridLayout_9.addWidget(self.ui.label_6, 1, 0, 1, 1)
-
-
 
 
             print(self.ui.gridLayout_8.count())
