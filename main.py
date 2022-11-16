@@ -832,8 +832,10 @@ class main_window(QtWidgets.QMainWindow):
         print(datetime.now() - start)
         #Меропрития
         events=db.collection('events').stream()
-        count=0
+        count=1
+        #self.ui.label_7.resizeEvent = self.onresize
         for event in events:
+
             #if self.ui.gridLayout_8.count()
             self.ui.groupBox = QtWidgets.QGroupBox(self.ui.scrollAreaWidgetContents)
             # политика изменения размера
@@ -842,7 +844,7 @@ class main_window(QtWidgets.QMainWindow):
             sizePolicy.setVerticalStretch(0)
             sizePolicy.setHeightForWidth(self.ui.groupBox.sizePolicy().hasHeightForWidth())
             self.ui.groupBox.setSizePolicy(sizePolicy)
-            self.ui.groupBox.setMinimumSize(QtCore.QSize(230, 400))
+            self.ui.groupBox.setMinimumSize(QtCore.QSize(210, 400))
             self.ui.groupBox.setSizeIncrement(QtCore.QSize(0, 0))
 
             self.ui.groupBox.setObjectName("groupBox")
@@ -851,7 +853,7 @@ class main_window(QtWidgets.QMainWindow):
 
             self.ui.label_8 = QtWidgets.QLabel(self.ui.groupBox)
             # политика изменения размера
-            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Ignored)
+            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Maximum)
             sizePolicy.setHorizontalStretch(0)
             sizePolicy.setVerticalStretch(0)
             sizePolicy.setHeightForWidth(self.ui.label_8.sizePolicy().hasHeightForWidth())
@@ -861,28 +863,54 @@ class main_window(QtWidgets.QMainWindow):
             self.ui.label_8.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
             self.ui.label_8.setObjectName("label_8")
             self.ui.label_8.setWordWrap(True)
-            self.ui.label_8.setText("описание:\n"+ event.get('description'))
+            self.ui.label_8.setText("Описание:\n"+ event.get('description'))
             self.ui.gridLayout_9.addWidget(self.ui.label_8, 2, 0, 1, 1)
 
-            self.ui.label_7 = QtWidgets.QLabel(self.ui.groupBox)
+            self.ui.widget_4 = QtWidgets.QWidget(self.ui.groupBox)
+            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
+            sizePolicy.setHorizontalStretch(0)
+            sizePolicy.setVerticalStretch(0)
+            sizePolicy.setHeightForWidth(self.ui.widget_4.sizePolicy().hasHeightForWidth())
+            self.ui.widget_4.setSizePolicy(sizePolicy)
+            self.ui.widget_4.setObjectName("widget_4")
+            self.ui.verticalLayout_4 = QtWidgets.QVBoxLayout(self.ui.widget_4)
+            self.ui.verticalLayout_4.setObjectName("verticalLayout_4")
+            self.ui.label_7 = QtWidgets.QLabel(self.ui.widget_4)
+
+
+
             # политика изменения размера
-            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Expanding)
+            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
             sizePolicy.setHorizontalStretch(0)
             sizePolicy.setVerticalStretch(0)
             sizePolicy.setHeightForWidth(self.ui.label_7.sizePolicy().hasHeightForWidth())
             self.ui.label_7.setSizePolicy(sizePolicy)
-            self.ui.label_7.setMaximumSize(QtCore.QSize(210, 210))
+            #self.ui.label_7.setFrameShape(QtWidgets.QFrame.Box)
+            self.ui.label_7.setMinimumSize(200, 200)
+            self.ui.label_7.setMaximumSize(QtCore.QSize(16777215, 16777215))
+            self.ui.label_7.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
             self.ui.label_7.setText("")
+
 
             image = QtGui.QImage() #TODO раскоментить(долго чекать просто)
             url_image = event.get("images")[0]
             #print(url_image)
             image.loadFromData(urlopen(url_image).read())
-            self.ui.label_7.setPixmap(QtGui.QPixmap(image))
+            p=QtGui.QPixmap(image)
 
-            self.ui.label_7.setScaledContents(True)
+
+
+            #image.save("cash\\cash"+str(count)+".png","PNG")
+            #поменял функцию ресайза на свою
+            #self.ui.label_7.resizeEvent=self.onresize
+
+                                            #ширина высота
+            self.ui.label_7.setPixmap(p.scaled(200,200,QtCore.Qt.AspectRatioMode.KeepAspectRatio,QtCore.Qt.TransformationMode.SmoothTransformation))
+
+
+            #self.ui.label_7.setScaledContents(True)
             self.ui.label_7.setObjectName("label_7")
-            self.ui.gridLayout_9.addWidget(self.ui.label_7, 0, 0, 1, 1)
+            self.ui.gridLayout_9.addWidget(self.ui.widget_4, 0, 0, 1, 1)
 
             self.ui.label_6 = QtWidgets.QLabel(self.ui.groupBox)
             sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
@@ -894,7 +922,7 @@ class main_window(QtWidgets.QMainWindow):
             self.ui.label_6.setText("Дата: "+ event.get('date'))
             self.ui.gridLayout_9.addWidget(self.ui.label_6, 1, 0, 1, 1)
 
-
+            count+=1
             print(self.ui.gridLayout_8.count())
             if self.ui.gridLayout_8.count() % 3 == 0:
                 self.ui.gridLayout_8.addWidget(self.ui.groupBox, self.ui.gridLayout_8.rowCount(),
@@ -903,7 +931,7 @@ class main_window(QtWidgets.QMainWindow):
                 self.ui.gridLayout_8.addWidget(self.ui.groupBox, self.ui.gridLayout_8.rowCount() - 1,
                                                self.ui.gridLayout_8.count() % 3, 1, 1)
 
-
+        #self.ui.groupBox.resizeEvent = self.onresize
         print(datetime.now() - start)
         #Экранчик перед запуском
         try:
@@ -912,6 +940,34 @@ class main_window(QtWidgets.QMainWindow):
             pyi_splash.close()
         except:
             pass
+
+
+    # поменял функцию ресайза на свою
+
+    def onresize(self,event):
+        #print("resized",event.size())
+        count=0
+        #p=QtGui.QPixmap("cash\\cash_"+str(count) +".png")
+        print(self.ui.widget_4.width(), self.ui.widget_4.height())
+
+        for i in range(self.ui.gridLayout_8.count()):
+            Label_obj = self.ui.gridLayout_8.itemAt(i).widget().findChild(QtWidgets.QLabel, "label_7")
+            #sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
+            #sizePolicy.setHorizontalStretch(0)
+            #sizePolicy.setVerticalStretch(0)
+            #sizePolicy.setHeightForWidth(Label_obj.sizePolicy().hasHeightForWidth())
+            #Label_obj.setSizePolicy(sizePolicy)
+
+            Label_obj.setFixedSize(self.ui.widget_4.width()-10,self.ui.widget_4.height()-10)
+            p = QtGui.QPixmap("cash\\cash" + str(count) + ".png")
+            Label_obj.setPixmap(p.scaled(self.ui.widget_4.width()-10, self.ui.widget_4.height()-10, QtCore.Qt.AspectRatioMode.KeepAspectRatio))#,
+                                               #QtCore.Qt.TransformationMode.SmoothTransformation))
+            count+=1
+            '''
+            if image is not None:
+                Label_obj.setPixmap(image.scaled(event.size().height(), event.size().width(), QtCore.Qt.AspectRatioMode.KeepAspectRatio))
+                                        #QtCore.Qt.TransformationMode.SmoothTransformation))
+            '''
 
     # открытие карточки достижения
     def open_achiv_Window(self):
