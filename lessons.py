@@ -24,7 +24,9 @@ class Ui_lessons(object):
         lessons.setMinimumSize(QtCore.QSize(500, 500))
         lessons.setMaximumSize(QtCore.QSize(500, 500))
         lessons.setBaseSize(QtCore.QSize(400, 400))
+        lessons.setWindowOpacity(1.0)
         lessons.setDocumentMode(False)
+        lessons.setTabShape(QtWidgets.QTabWidget.Rounded)
         lessons.setDockOptions(QtWidgets.QMainWindow.AllowTabbedDocks|QtWidgets.QMainWindow.AnimatedDocks)
         self.centralwidget = QtWidgets.QWidget(lessons)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
@@ -99,13 +101,3 @@ class Ui_lessons(object):
         self.label_2.setText(_translate("lessons", "Приложите карту к считывателю или просканируйте QR-код для засчитывания посещения"))
         self.label_3.setText(_translate("lessons", "ПОДОЖДИТЕ"))
         self.pushButton.setText(_translate("lessons", "Сохранить"))
-
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    lessons = QtWidgets.QMainWindow()
-    ui = Ui_lessons()
-    ui.setupUi(lessons)
-    lessons.show()
-    sys.exit(app.exec_())

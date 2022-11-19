@@ -1,7 +1,7 @@
 import sys  # sys нужен для передачи argv в QApplication
-# import requests
 import os
 import time
+import httplib2
 
 from urllib.request import urlopen
 from PyQt5 import QtWidgets, QtGui, QtCore
@@ -279,6 +279,7 @@ class add_lessons(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         # инициализация мейна
         super(add_lessons, self).__init__(parent)
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint)
 
         self.ui = Ui_lessons()
         self.ui.setupUi(self)
@@ -833,7 +834,9 @@ class main_window(QtWidgets.QMainWindow):
         #Меропрития
         events=db.collection('events').stream()
         count=1
+
         #self.ui.label_7.resizeEvent = self.onresize
+        h = httplib2.Http('.cache')
         for event in events:
 
             #if self.ui.gridLayout_8.count()
@@ -891,21 +894,27 @@ class main_window(QtWidgets.QMainWindow):
             self.ui.label_7.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
             self.ui.label_7.setText("")
 
+            #изображение
 
-            image = QtGui.QImage() #TODO раскоментить(долго чекать просто)
+            start = datetime.now()
+            image = QtGui.QPixmap() #TODO раскоментить(долго чекать просто)
             url_image = event.get("images")[0]
+            response, content = h.request(url_image,"GET")
+            load_image=h.cache.get("content")
+            #out = open('img.jpg', 'wb')
+            #out.write(content)
+            #out.close()
             #print(url_image)
-            image.loadFromData(urlopen(url_image).read())
+            #start = datetime.now()
+            image.loadFromData(load_image)#todo проверить отображение картинок
             p=QtGui.QPixmap(image)
 
-
-
-            #image.save("cash\\cash"+str(count)+".png","PNG")
             #поменял функцию ресайза на свою
             #self.ui.label_7.resizeEvent=self.onresize
 
                                             #ширина высота
             self.ui.label_7.setPixmap(p.scaled(200,200,QtCore.Qt.AspectRatioMode.KeepAspectRatio,QtCore.Qt.TransformationMode.SmoothTransformation))
+            print(count, datetime.now() - start)
 
 
             #self.ui.label_7.setScaledContents(True)
@@ -922,8 +931,9 @@ class main_window(QtWidgets.QMainWindow):
             self.ui.label_6.setText("Дата: "+ event.get('date'))
             self.ui.gridLayout_9.addWidget(self.ui.label_6, 1, 0, 1, 1)
 
+
             count+=1
-            print(self.ui.gridLayout_8.count())
+
             if self.ui.gridLayout_8.count() % 3 == 0:
                 self.ui.gridLayout_8.addWidget(self.ui.groupBox, self.ui.gridLayout_8.rowCount(),
                                                0, 1, 1)
@@ -934,13 +944,16 @@ class main_window(QtWidgets.QMainWindow):
         #self.ui.groupBox.resizeEvent = self.onresize
         print(datetime.now() - start)
         #Экранчик перед запуском
+        '''
         try:
             import pyi_splash
             pyi_splash.update_text('UI Loaded ...')
             pyi_splash.close()
         except:
             pass
+        '''
 
+    #print(self.ui.gridLayout_8.count())
 
     # поменял функцию ресайза на свою
 
