@@ -891,7 +891,7 @@ class main_window(QtWidgets.QMainWindow):
             self.ui.label_7.setSizePolicy(sizePolicy)
             #self.ui.label_7.setFrameShape(QtWidgets.QFrame.Box)
             self.ui.label_7.setMinimumSize(200, 200)
-            self.ui.label_7.setMaximumSize(QtCore.QSize(16777215, 16777215))
+            self.ui.label_7.setMaximumSize(QtCore.QSize(16777215, 200))
             self.ui.label_7.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
             self.ui.label_7.setText("")
 
@@ -916,6 +916,7 @@ class main_window(QtWidgets.QMainWindow):
             #self.ui.label_7.setScaledContents(True)
             self.ui.label_7.setObjectName("label_7")
             self.ui.gridLayout_9.addWidget(self.ui.widget_4, 0, 0, 1, 1)
+
 
             self.ui.label_6 = QtWidgets.QLabel(self.ui.groupBox)
             sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
@@ -957,8 +958,18 @@ class main_window(QtWidgets.QMainWindow):
         load_image = h.cache.get("content")
         image.loadFromData(content)
         p = QtGui.QPixmap(image)
-        Label_obj.setPixmap(p.scaled(200, 200, QtCore.Qt.AspectRatioMode.KeepAspectRatio,
-                                     QtCore.Qt.TransformationMode.SmoothTransformation))
+        w=p.width()
+        h=p.height()
+
+        if w>h:
+
+            cropped= p.copy( w//2-h//2,0,w,h )
+
+        else:
+            cropped = p.copy(0, h // 2 - w // 2, w, h)
+
+        Label_obj.setPixmap(cropped.scaled(200, 200, QtCore.Qt.AspectRatioMode.KeepAspectRatio,
+                                         QtCore.Qt.TransformationMode.SmoothTransformation))
     def onresize(self,event):
         #print("resized",event.size())
         count=0
