@@ -138,7 +138,7 @@ class Ui_MainWindow(object):
         self.tableWidget_uch.setHorizontalHeaderItem(5, item)
         item = QtWidgets.QTableWidgetItem()
         self.tableWidget_uch.setHorizontalHeaderItem(6, item)
-        self.tableWidget_uch.horizontalHeader().setVisible(True)
+        self.tableWidget_uch.horizontalHeader().setVisible(False)
         self.tableWidget_uch.horizontalHeader().setCascadingSectionResizes(False)
         self.tableWidget_uch.horizontalHeader().setDefaultSectionSize(85)
         self.tableWidget_uch.horizontalHeader().setHighlightSections(True)
@@ -468,7 +468,7 @@ class Ui_MainWindow(object):
         self.label_uch_login.setBuddy(self.lineEdit_uch_login)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(5)
         self.checkBox_achiv_type_2.toggled['bool'].connect(self.spinBox_reward_search_2.setEnabled) # type: ignore
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -569,3 +569,13 @@ class Ui_MainWindow(object):
         self.pushButton_3.setText(_translate("MainWindow", "Сохранить мероприятие"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "Мероприятие"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Мероприятия"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())

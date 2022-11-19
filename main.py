@@ -33,6 +33,7 @@ from firebase_admin import firestore
 import qrcode
 
 import psutil
+import threading
 count=0
 for proc in psutil.process_iter():
     name = proc.name()
@@ -361,7 +362,6 @@ class main_window(QtWidgets.QMainWindow):
         self.ui.pushButton_3.clicked.connect(self.save_event)
 
 
-
     #добавление ивента в БД
     def save_event(self):
 
@@ -375,7 +375,7 @@ class main_window(QtWidgets.QMainWindow):
 
         image_url = 'None'
         if imagePath != '':
-            blob = bucket.blob("/Events" + id + ".png")
+            blob = bucket.blob("Events/event_" + id + ".png")
             blob.upload_from_filename(imagePath)
             blob.make_public()
             image_url = blob.public_url
@@ -391,9 +391,9 @@ class main_window(QtWidgets.QMainWindow):
         events.add(data)
 
         #clean
-        self.ui.calendarWidget.clean()
-        self.ui.textEdit.clean()
-        self.ui.lineEdit.clean()
+        #self.ui.calendarWidget.clear()
+        self.ui.textEdit.clear()
+        self.ui.lineEdit.clear()
         print('saved event')
 
     #закрытие уроков и обновление бд
@@ -836,6 +836,7 @@ class main_window(QtWidgets.QMainWindow):
         count=1
 
         #self.ui.label_7.resizeEvent = self.onresize
+        threads = []
         h = httplib2.Http('.cache')
         for event in events:
 
@@ -897,21 +898,16 @@ class main_window(QtWidgets.QMainWindow):
             #изображение
 
             start = datetime.now()
-            image = QtGui.QPixmap() #TODO раскоментить(долго чекать просто)
+            image = QtGui.QPixmap('logo1.png.png') #TODO раскоментить(долго чекать просто)
             url_image = event.get("images")[0]
-            response, content = h.request(url_image,"GET")
-            load_image=h.cache.get("content")
-            #out = open('img.jpg', 'wb')
-            #out.write(content)
-            #out.close()
-            #print(url_image)
-            #start = datetime.now()
-            image.loadFromData(load_image)#todo проверить отображение картинок
-            p=QtGui.QPixmap(image)
+
+            #response, content = h.request(url_image,"GET")
+            #load_image=h.cache.get("content")
+            #image.loadFromData(content)
+            p=QtGui.QPixmap('logo1.png')
 
             #поменял функцию ресайза на свою
             #self.ui.label_7.resizeEvent=self.onresize
-
                                             #ширина высота
             self.ui.label_7.setPixmap(p.scaled(200,200,QtCore.Qt.AspectRatioMode.KeepAspectRatio,QtCore.Qt.TransformationMode.SmoothTransformation))
             print(count, datetime.now() - start)
@@ -933,30 +929,36 @@ class main_window(QtWidgets.QMainWindow):
 
 
             count+=1
-
+            threads.append(threading.Thread(target=self.load, args=(self.ui.label_7, url_image)))
             if self.ui.gridLayout_8.count() % 3 == 0:
                 self.ui.gridLayout_8.addWidget(self.ui.groupBox, self.ui.gridLayout_8.rowCount(),
                                                0, 1, 1)
             else:
                 self.ui.gridLayout_8.addWidget(self.ui.groupBox, self.ui.gridLayout_8.rowCount() - 1,
                                                self.ui.gridLayout_8.count() % 3, 1, 1)
-
+        for thread in threads:
+            thread.start()  # каждый поток должен быть запущен
+        for thread in threads:
+            thread.join()
         #self.ui.groupBox.resizeEvent = self.onresize
         print(datetime.now() - start)
-        #Экранчик перед запуском
-        '''
-        try:
-            import pyi_splash
-            pyi_splash.update_text('UI Loaded ...')
-            pyi_splash.close()
-        except:
-            pass
-        '''
+
+
 
     #print(self.ui.gridLayout_8.count())
 
     # поменял функцию ресайза на свою
-
+    # Мультипоточная загрузка картинок
+    def load(self, Label_obj, url_image):
+        # print("loaded",Label_obj,url_image)
+        image = QtGui.QPixmap()  # TODO раскоментить(долго чекать просто)
+        h = httplib2.Http('.cache')
+        response, content = h.request(url_image, "GET")
+        load_image = h.cache.get("content")
+        image.loadFromData(content)
+        p = QtGui.QPixmap(image)
+        Label_obj.setPixmap(p.scaled(200, 200, QtCore.Qt.AspectRatioMode.KeepAspectRatio,
+                                     QtCore.Qt.TransformationMode.SmoothTransformation))
     def onresize(self,event):
         #print("resized",event.size())
         count=0
