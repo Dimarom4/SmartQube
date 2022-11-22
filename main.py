@@ -392,9 +392,10 @@ class main_window(QtWidgets.QMainWindow):
 
         #clean
         #self.ui.calendarWidget.clear()
+        print('saved event')
+        self.update_event_data_from_db(data)
         self.ui.textEdit.clear()
         self.ui.lineEdit.clear()
-        print('saved event')
 
     #закрытие уроков и обновление бд
     def add_lessons_close(self):
@@ -496,6 +497,9 @@ class main_window(QtWidgets.QMainWindow):
                     if int(achiv_progress) == achiv.get('pointsNeed')-1:
                         update_data['achivProgress.' + achivID] = str(datetime.today().day) + '.' + str(datetime.today().month) + '.' + str(
                             datetime.today().year)
+                        update_data['allPoints']= int(user.get('allPoints')) + point+ achiv.get('point')
+                        update_data['points']: int(user.get('points')) + point+ achiv.get('point')
+
 
             db.collection('users').document(user.id).update(update_data)
             print(user.get('cardId'),datetime.now() - start)
@@ -637,7 +641,7 @@ class main_window(QtWidgets.QMainWindow):
         self.update_uch_data_from_db()
 
         # storage.child("users_image/logo.png").put(imagePath)   #put('logo1.png')
-
+    #обновление учеников и достижений
     def update_uch_data_from_db(self):
         print("update from db")
         start=datetime.now()
@@ -654,19 +658,26 @@ class main_window(QtWidgets.QMainWindow):
             if rowPosition < user_number:
                 self.ui.tableWidget_uch.insertRow(rowPosition)
 
-
+            print(user_number,rowPosition,self.ui.tableWidget_uch.rowCount())
             # добавление данных в ячейки
             # ID
-            self.ui.tableWidget_uch.item(0, 0).setText(str(user.get('userId')))
+            item = QtWidgets.QTableWidgetItem(user.get('userId'))
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_uch.setItem(user_number - 1, 0, item)
             # Фио
+            item = QtWidgets.QTableWidgetItem(user.get('name'))
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_uch.setItem(user_number - 1, 1, item)
 
-            self.ui.tableWidget_uch.item(user_number - 1, 1).setText(user.get('name'))
             # кубиков всего
+            item = QtWidgets.QTableWidgetItem(str(user.get('allPoints')))
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_uch.setItem(user_number - 1, 2, item)
 
-            self.ui.tableWidget_uch.item(user_number - 1, 2).setText(str(user.get('allPoints')))
             # кубикорубли
-
-            self.ui.tableWidget_uch.item(user_number - 1, 3).setText(str(user.get('points')))
+            item = QtWidgets.QTableWidgetItem(str(user.get('points')))
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_uch.setItem(user_number - 1, 3, item)
             # достижений
 
             achiv_counter = 0
@@ -674,12 +685,36 @@ class main_window(QtWidgets.QMainWindow):
                 # print('achiv_count',achiv_count)
                 if len(achiv) >= 7:
                     achiv_counter += 1
-            self.ui.tableWidget_uch.item(user_number - 1, 4).setText(str(achiv_counter))
+            item = QtWidgets.QTableWidgetItem(str(achiv_counter))
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_uch.setItem(user_number - 1, 4, item)
+
             # часов всего
+            item = QtWidgets.QTableWidgetItem(str(user.get('hours')))
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_uch.setItem(user_number - 1, 5, item)
 
-            self.ui.tableWidget_uch.item(user_number - 1, 5).setText(str(user.get('hours')))
+            # cardID
+            item = QtWidgets.QTableWidgetItem(str(user.get('cardId')))
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_uch.setItem(user_number - 1, 6, item)
 
-            self.ui.tableWidget_uch.item(user_number - 1, 6).setText(str(user.get('cardId')))
+            self.ui.tableWidget_leaderboard.insertRow(user_number - 1)
+            #leaderboard
+            item = QtWidgets.QTableWidgetItem(str(user.get('userId')))
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_leaderboard.setItem(user_number - 1, 0, item)
+
+            # Фио
+            item = QtWidgets.QTableWidgetItem(user.get('name'))
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_leaderboard.setItem(user_number - 1, 0, item)
+
+            # кубиков всего
+            item = QtWidgets.QTableWidgetItem(str(user.get('allPoints')))
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_leaderboard.setItem(user_number - 1, 1, item)
+
             user_number += 1
         print(datetime.now() - start)
         start = datetime.now()
@@ -697,24 +732,126 @@ class main_window(QtWidgets.QMainWindow):
 
             # добавление данных в ячейки
             # ID
-
-            self.ui.tableWidget_achiv.item(achiv_number - 1, 0).setText(str(achivment.get('achivID')))
+            item = QtWidgets.QTableWidgetItem(str(achivment.get('achivID')))
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_achiv.setItem(achiv_number - 1, 0, item)
+            # self.ui.tableWidget_achiv.item(achiv_number - 1, 0).setText(str(achivment.get('achivID')))
             # название
-
-            self.ui.tableWidget_achiv.item(achiv_number - 1, 1).setText(achivment.get('name'))
+            item = QtWidgets.QTableWidgetItem(achivment.get('name'))
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_achiv.setItem(achiv_number - 1, 1, item)
+            # self.ui.tableWidget_achiv.item(achiv_number - 1, 1).setText(achivment.get('name'))
             # награда
-
-            self.ui.tableWidget_achiv.item(achiv_number - 1, 2).setText(str(achivment.get('point')))
+            item = QtWidgets.QTableWidgetItem(str(achivment.get('point')))
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_achiv.setItem(achiv_number - 1, 2, item)
+            # self.ui.tableWidget_achiv.item(achiv_number - 1, 2).setText(str(achivment.get('point')))
             # тип
-
-            self.ui.tableWidget_achiv.item(achiv_number - 1, 3).setText(achivment.get('type'))
+            item = QtWidgets.QTableWidgetItem(achivment.get('type'))
+            item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_achiv.setItem(achiv_number - 1, 3, item)
+            # self.ui.tableWidget_achiv.item(achiv_number - 1, 3).setText(achivment.get('type'))
 
 
 
             achiv_number += 1
 
         print(datetime.now()-start)
+    #обновление мероприятий
+    def update_event_data_from_db(self,data):
 
+        print("event update",data)
+        self.ui.groupBox = QtWidgets.QGroupBox(self.ui.scrollAreaWidgetContents)
+        # политика изменения размера
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.ui.groupBox.sizePolicy().hasHeightForWidth())
+        self.ui.groupBox.setSizePolicy(sizePolicy)
+        self.ui.groupBox.setMinimumSize(QtCore.QSize(210, 400))
+        self.ui.groupBox.setSizeIncrement(QtCore.QSize(0, 0))
+
+        self.ui.groupBox.setObjectName("groupBox")
+        self.ui.groupBox.setTitle(data.get('name'))
+        self.ui.gridLayout_9 = QtWidgets.QGridLayout(self.ui.groupBox)
+
+        self.ui.label_8 = QtWidgets.QLabel(self.ui.groupBox)
+        # политика изменения размера
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.ui.label_8.sizePolicy().hasHeightForWidth())
+        self.ui.label_8.setSizePolicy(sizePolicy)
+        self.ui.label_8.setBaseSize(QtCore.QSize(0, 0))
+        self.ui.label_8.setTextFormat(QtCore.Qt.AutoText)
+        self.ui.label_8.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
+        self.ui.label_8.setObjectName("label_8")
+        self.ui.label_8.setWordWrap(True)
+        self.ui.label_8.setText("Описание:\n" + data.get('description'))
+        self.ui.gridLayout_9.addWidget(self.ui.label_8, 2, 0, 1, 1)
+
+        self.ui.widget_4 = QtWidgets.QWidget(self.ui.groupBox)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.ui.widget_4.sizePolicy().hasHeightForWidth())
+        self.ui.widget_4.setSizePolicy(sizePolicy)
+        self.ui.widget_4.setObjectName("widget_4")
+        self.ui.verticalLayout_4 = QtWidgets.QVBoxLayout(self.ui.widget_4)
+        self.ui.verticalLayout_4.setObjectName("verticalLayout_4")
+        self.ui.label_7 = QtWidgets.QLabel(self.ui.widget_4)
+
+        # политика изменения размера
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.ui.label_7.sizePolicy().hasHeightForWidth())
+        self.ui.label_7.setSizePolicy(sizePolicy)
+        # self.ui.label_7.setFrameShape(QtWidgets.QFrame.Box)
+        self.ui.label_7.setMinimumSize(200, 200)
+        self.ui.label_7.setMaximumSize(QtCore.QSize(16777215, 200))
+        self.ui.label_7.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
+        self.ui.label_7.setText("")
+
+        # изображение
+
+        start = datetime.now()
+        image = QtGui.QPixmap('logo1.png')  # TODO раскоментить(долго чекать просто)
+        url_image = data.get("images")[0]
+
+        # response, content = h.request(url_image,"GET")
+        # load_image=h.cache.get("content")
+        # image.loadFromData(content)
+        p = QtGui.QPixmap('logo1.png')
+
+        # поменял функцию ресайза на свою
+        # self.ui.label_7.resizeEvent=self.onresize
+        # ширина высота
+        self.ui.label_7.setPixmap(p.scaled(200, 200, QtCore.Qt.AspectRatioMode.KeepAspectRatio,
+                                           QtCore.Qt.TransformationMode.SmoothTransformation))
+        print(count, datetime.now() - start)
+
+        # self.ui.label_7.setScaledContents(True)
+        self.ui.label_7.setObjectName("label_7")
+        self.ui.gridLayout_9.addWidget(self.ui.widget_4, 0, 0, 1, 1)
+
+        self.ui.label_6 = QtWidgets.QLabel(self.ui.groupBox)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.ui.label_6.sizePolicy().hasHeightForWidth())
+        self.ui.label_6.setSizePolicy(sizePolicy)
+        self.ui.label_6.setObjectName("label_6")
+        self.ui.label_6.setText("Дата: " + data.get('date'))
+        self.ui.gridLayout_9.addWidget(self.ui.label_6, 1, 0, 1, 1)
+
+        if self.ui.gridLayout_8.count() % 3 == 0:
+            self.ui.gridLayout_8.addWidget(self.ui.groupBox, self.ui.gridLayout_8.rowCount(),
+                                           0, 1, 1)
+        else:
+            self.ui.gridLayout_8.addWidget(self.ui.groupBox, self.ui.gridLayout_8.rowCount() - 1,
+                                           self.ui.gridLayout_8.count() % 3, 1, 1)
+        self.load(self.ui.label_7, url_image)
     # данные из бд
     #@run_once
     def get_data_from_db(self):
@@ -840,7 +977,7 @@ class main_window(QtWidgets.QMainWindow):
         h = httplib2.Http('.cache')
         for event in events:
 
-            #if self.ui.gridLayout_8.count()
+
             self.ui.groupBox = QtWidgets.QGroupBox(self.ui.scrollAreaWidgetContents)
             # политика изменения размера
             sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Fixed)
@@ -937,6 +1074,7 @@ class main_window(QtWidgets.QMainWindow):
             else:
                 self.ui.gridLayout_8.addWidget(self.ui.groupBox, self.ui.gridLayout_8.rowCount() - 1,
                                                self.ui.gridLayout_8.count() % 3, 1, 1)
+
         for thread in threads:
             thread.start()  # каждый поток должен быть запущен
         for thread in threads:
@@ -952,7 +1090,7 @@ class main_window(QtWidgets.QMainWindow):
     # Мультипоточная загрузка картинок
     def load(self, Label_obj, url_image):
         # print("loaded",Label_obj,url_image)
-        image = QtGui.QPixmap()  # TODO раскоментить(долго чекать просто)
+        image = QtGui.QPixmap()
         h = httplib2.Http('.cache')
         response, content = h.request(url_image, "GET")
         load_image = h.cache.get("content")
@@ -1118,7 +1256,7 @@ class main_window(QtWidgets.QMainWindow):
         self.achiv_info.ui.pushButton_9.clicked.disconnect()
 
     # Добавление учеников карточками
-    def update_uch(self, achivments_list):
+    def update_uch(self, achivments_list): #todo не пашет, изменить
         print(self.achiv_info.ui.lineEdit_2.text())
 
         users = db.reference('users').get()
