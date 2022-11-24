@@ -366,14 +366,12 @@ class main_window(QtWidgets.QMainWindow):
 
     #проерка чека
     def count_check(self, item): #todo сделать проверку на только один чек
-        print('cellChanged',item)
+        #print('cellChanged',item)
+        if item.checkState()==2:
+            for i in range(self.ui.tableWidget.rowCount()):
+                if self.ui.tableWidget.item(i,1)!= item:
+                    self.ui.tableWidget.item(i, 1).setCheckState(QtCore.Qt.Unchecked)
 
-        for i in range(self.ui.tableWidget.rowCount()):
-            if self.ui.tableWidget.item(i,1)!= item:
-                self.ui.tableWidget.item(i, 1).setCheckState(QtCore.Qt.Unchecked)
-            else:
-                #self.ui.tableWidget.item(i, 1).setCheckState(QtCore.Qt.Unchecked)
-                print(self.ui.tableWidget.item(i, 1).checkState())
 
     #добавление счетчика
     def add_counter(self):
