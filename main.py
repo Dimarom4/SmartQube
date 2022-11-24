@@ -360,7 +360,56 @@ class main_window(QtWidgets.QMainWindow):
         self.ui.pushButton_festival.clicked.connect(self.lesson)
         # мероприятия
         self.ui.pushButton_3.clicked.connect(self.save_event)
+        #активности
+        self.ui.pushButton_4.clicked.connect(self.add_counter)
+        self.ui.tableWidget.itemChanged.connect(self.count_check)
 
+    #проерка чека
+    def count_check(self, item): #todo сделать проверку на только один чек
+        print('cellChanged',item)
+
+        for i in range(self.ui.tableWidget.rowCount()):
+            if self.ui.tableWidget.item(i,1)!= item:
+                self.ui.tableWidget.item(i, 1).setCheckState(QtCore.Qt.Unchecked)
+            else:
+                #self.ui.tableWidget.item(i, 1).setCheckState(QtCore.Qt.Unchecked)
+                print(self.ui.tableWidget.item(i, 1).checkState())
+
+    #добавление счетчика
+    def add_counter(self):
+        starttime=datetime.now()
+        users_data={
+
+        }
+        users=db.collection('users').stream()
+        for user in users:
+
+            users_data.update({user.get('userId'):0})
+        data={
+            'counter_name': self.ui.lineEdit_2.text(),
+            'users':users_data
+        }
+        counter=db.collection('counters').add(data)
+        self.update_counters()
+        print(datetime.now()-starttime)
+    def update_counters(self):
+        counter = db.collection('counters').stream()
+        count_counter=1
+        for count in counter:
+            rowPosition = self.ui.tableWidget.rowCount()
+            # print(rowPosition)
+            if rowPosition < count_counter:
+                self.ui.tableWidget.insertRow(rowPosition)
+            item = QtWidgets.QTableWidgetItem(str(count.get('counter_name')))
+            item.setFlags(QtCore.Qt.ItemIsDragEnabled | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget.setItem(count_counter-1, 0, item)
+            #выбран
+            item = QtWidgets.QTableWidgetItem()
+            item.setTextAlignment(QtCore.Qt.AlignCenter)
+            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+            item.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.tableWidget.setItem(count_counter-1, 1, item)
+            count_counter+=1
 
     #добавление ивента в БД
     def save_event(self):
@@ -1041,7 +1090,7 @@ class main_window(QtWidgets.QMainWindow):
             #response, content = h.request(url_image,"GET")
             #load_image=h.cache.get("content")
             #image.loadFromData(content)
-            p=QtGui.QPixmap('logo1.png')
+            p=QtGui.QPixmap('logo.png')
 
             #поменял функцию ресайза на свою
             #self.ui.label_7.resizeEvent=self.onresize
@@ -1079,10 +1128,25 @@ class main_window(QtWidgets.QMainWindow):
             thread.start()  # каждый поток должен быть запущен
         for thread in threads:
             thread.join()
+        #счетчики
+        counter = db.collection('counters').stream()
+        count_counter = 1
+        for count in counter:
+            rowPosition = self.ui.tableWidget.rowCount()
+            # print(rowPosition)
+            if rowPosition < count_counter:
+                self.ui.tableWidget.insertRow(rowPosition)
+            item = QtWidgets.QTableWidgetItem(str(count.get('counter_name')))
+            self.ui.tableWidget.setItem(count_counter - 1, 0, item)
+            # выбран
+            item = QtWidgets.QTableWidgetItem()
+            item.setTextAlignment(QtCore.Qt.AlignCenter)
+            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+            item.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.tableWidget.setItem(count_counter - 1, 1, item)
+            count_counter += 1
         #self.ui.groupBox.resizeEvent = self.onresize
         print(datetime.now() - start)
-
-
 
     #print(self.ui.gridLayout_8.count())
 
@@ -1147,6 +1211,7 @@ class main_window(QtWidgets.QMainWindow):
         achiv_counter = 0
         for i in db.collection('achivments').where(u'achivID', u'==', achiv_id).stream():
             achiv_info = i.to_dict()
+
         # print(achiv_info)
         for user in users:
 
