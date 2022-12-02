@@ -362,10 +362,25 @@ class main_window(QtWidgets.QMainWindow):
         self.ui.pushButton_3.clicked.connect(self.save_event)
         #активности
         self.ui.pushButton_4.clicked.connect(self.add_counter)
+        #проверка чека только на один чек
         self.ui.tableWidget.itemChanged.connect(self.count_check)
-
-    #проерка чека
-    def count_check(self, item): #todo сделать проверку на только один чек
+        #добавление новой активности
+        self.ui.pushButton_5.clicked.connect(self.add_new_activ)
+    #добавление новой активности
+    def add_new_activ(self):
+        for i in range(self.ui.tableWidget.rowCount()):
+            if self.ui.tableWidget.item(i, 1).checkState()==2:
+                print(self.ui.tableWidget.item(i, 0).text())
+        data={
+            'activ_name':self.ui.lineEdit_3.text() ,
+            'activ_point': self.ui.spinBox.value()
+        }
+        counter= db.collection('counters').where('counter_name', u'==',self.ui.tableWidget.item(i, 0).text()).stream()
+        print(data)
+        for i in counter:
+            print(i.id)
+    #проверка чека
+    def count_check(self, item):
         #print('cellChanged',item)
         if item.checkState()==2:
             for i in range(self.ui.tableWidget.rowCount()):
