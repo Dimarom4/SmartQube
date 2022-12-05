@@ -360,51 +360,28 @@ class main_window(QtWidgets.QMainWindow):
         self.ui.pushButton_festival.clicked.connect(self.lesson)
         # мероприятия
         self.ui.pushButton_3.clicked.connect(self.save_event)
-        #активности
-        self.ui.pushButton_4.clicked.connect(self.add_counter)
-        #проверка чека только на один чек
-        self.ui.tableWidget.itemChanged.connect(self.count_check)
         #добавление новой активности
         self.ui.pushButton_5.clicked.connect(self.add_new_activ)
     #добавление новой активности
     def add_new_activ(self):
-        for i in range(self.ui.tableWidget.rowCount()):
-            if self.ui.tableWidget.item(i, 1).checkState()==2:
-                print(self.ui.tableWidget.item(i, 0).text())
+        users_data = {
+
+        }
+        users = db.collection('users').stream()
+        for user in users:
+            users_data.update({user.get('userId'): 0})
+
         data={
             'activ_name':self.ui.lineEdit_3.text() ,
-            'activ_point': self.ui.spinBox.value()
+            'activ_point': self.ui.spinBox.value(),
+            'users': users_data
         }
-        counter= db.collection('counters').where('counter_name', u'==',self.ui.tableWidget.item(i, 0).text()).stream()
-        print(data)
-        for i in counter:
-            print(i.id)
-    #проверка чека
-    def count_check(self, item):
-        #print('cellChanged',item)
-        if item.checkState()==2:
-            for i in range(self.ui.tableWidget.rowCount()):
-                if self.ui.tableWidget.item(i,1)!= item:
-                    self.ui.tableWidget.item(i, 1).setCheckState(QtCore.Qt.Unchecked)
-
-
-    #добавление счетчика
-    def add_counter(self):
-        starttime=datetime.now()
-        users_data={
-
-        }
-        users=db.collection('users').stream()
-        for user in users:
-
-            users_data.update({user.get('userId'):0})
-        data={
-            'counter_name': self.ui.lineEdit_2.text(),
-            'users':users_data
-        }
-        counter=db.collection('counters').add(data)
+        counter = db.collection('counters').add(data)
         self.update_counters()
-        print(datetime.now()-starttime)
+
+
+
+    #обновление активностей
     def update_counters(self):
         counter = db.collection('counters').stream()
         count_counter=1
@@ -413,14 +390,14 @@ class main_window(QtWidgets.QMainWindow):
             # print(rowPosition)
             if rowPosition < count_counter:
                 self.ui.tableWidget.insertRow(rowPosition)
-            item = QtWidgets.QTableWidgetItem(str(count.get('counter_name')))
+            item = QtWidgets.QTableWidgetItem(str(count.get('activ_name')))
             item.setFlags(QtCore.Qt.ItemIsDragEnabled | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidget.setItem(count_counter-1, 0, item)
             #выбран
             item = QtWidgets.QTableWidgetItem()
             item.setTextAlignment(QtCore.Qt.AlignCenter)
-            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-            item.setCheckState(QtCore.Qt.Unchecked)
+            #item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+            item = QtWidgets.QTableWidgetItem(str(count.get('activ_point')))
             self.ui.tableWidget.setItem(count_counter-1, 1, item)
             count_counter+=1
 
@@ -1149,13 +1126,13 @@ class main_window(QtWidgets.QMainWindow):
             # print(rowPosition)
             if rowPosition < count_counter:
                 self.ui.tableWidget.insertRow(rowPosition)
-            item = QtWidgets.QTableWidgetItem(str(count.get('counter_name')))
+            item = QtWidgets.QTableWidgetItem(str(count.get('activ_name')))
             self.ui.tableWidget.setItem(count_counter - 1, 0, item)
             # выбран
             item = QtWidgets.QTableWidgetItem()
             item.setTextAlignment(QtCore.Qt.AlignCenter)
-            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-            item.setCheckState(QtCore.Qt.Unchecked)
+            #item.setFlags(QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled)
+            item = QtWidgets.QTableWidgetItem(str(count.get('activ_point')))
             self.ui.tableWidget.setItem(count_counter - 1, 1, item)
             count_counter += 1
         #self.ui.groupBox.resizeEvent = self.onresize
