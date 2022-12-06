@@ -362,6 +362,10 @@ class main_window(QtWidgets.QMainWindow):
         self.ui.pushButton_3.clicked.connect(self.save_event)
         #добавление новой активности
         self.ui.pushButton_5.clicked.connect(self.add_new_activ)
+
+
+    def lesson_new(self): #todo сделать добавить добавление очков за активности и кр код от кнопок
+        print(self.sender().text())
     #добавление новой активности
     def add_new_activ(self):
         users_data = {
@@ -378,8 +382,6 @@ class main_window(QtWidgets.QMainWindow):
         }
         counter = db.collection('counters').add(data)
         self.update_counters()
-
-
 
     #обновление активностей
     def update_counters(self):
@@ -400,6 +402,23 @@ class main_window(QtWidgets.QMainWindow):
             item = QtWidgets.QTableWidgetItem(str(count.get('activ_point')))
             self.ui.tableWidget.setItem(count_counter-1, 1, item)
             count_counter+=1
+
+            self.ui.pushButton_activ = QtWidgets.QPushButton(self.ui.scrollAreaWidgetContents_2)
+            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+            sizePolicy.setHorizontalStretch(0)
+            sizePolicy.setVerticalStretch(0)
+            sizePolicy.setHeightForWidth(self.ui.pushButton_activ.sizePolicy().hasHeightForWidth())
+            self.ui.pushButton_activ.setSizePolicy(sizePolicy)
+            self.ui.pushButton_activ.setMinimumSize(QtCore.QSize(100, 100))
+            self.ui.pushButton_activ.setObjectName("pushButton_activ")  # +str(count_counter-1))
+            self.ui.pushButton_activ.setText(str(count.get('activ_name')))
+            if self.ui.gridLayout_12.count() % 3 == 0:
+                self.ui.gridLayout_12.addWidget(self.ui.pushButton_activ, self.ui.gridLayout_12.rowCount(),
+                                                0, 1, 1)
+            else:
+                self.ui.gridLayout_12.addWidget(self.ui.pushButton_activ, self.ui.gridLayout_12.rowCount() - 1,
+                                                self.ui.gridLayout_12.count() % 3, 1, 1)
+            self.ui.pushButton_activ.clicked.connect(self.lesson_new)
 
     #добавление ивента в БД
     def save_event(self):
@@ -1135,6 +1154,25 @@ class main_window(QtWidgets.QMainWindow):
             item = QtWidgets.QTableWidgetItem(str(count.get('activ_point')))
             self.ui.tableWidget.setItem(count_counter - 1, 1, item)
             count_counter += 1
+
+            self.ui.pushButton_activ = QtWidgets.QPushButton(self.ui.scrollAreaWidgetContents_2)
+            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+            sizePolicy.setHorizontalStretch(0)
+            sizePolicy.setVerticalStretch(0)
+            sizePolicy.setHeightForWidth(self.ui.pushButton_activ.sizePolicy().hasHeightForWidth())
+            self.ui.pushButton_activ.setSizePolicy(sizePolicy)
+            self.ui.pushButton_activ.setMinimumSize(QtCore.QSize(100, 100))
+            self.ui.pushButton_activ.setObjectName("pushButton_activ")#+str(count_counter-1))
+            self.ui.pushButton_activ.setText(str(count.get('activ_name')))
+            if self.ui.gridLayout_12.count() % 3 == 0:
+                self.ui.gridLayout_12.addWidget(self.ui.pushButton_activ, self.ui.gridLayout_12.rowCount(),
+                                               0, 1, 1)
+            else:
+                self.ui.gridLayout_12.addWidget(self.ui.pushButton_activ, self.ui.gridLayout_12.rowCount() - 1,
+                                               self.ui.gridLayout_12.count() % 3, 1, 1)
+            self.ui.pushButton_activ.clicked.connect(self.lesson_new)
+
+
         #self.ui.groupBox.resizeEvent = self.onresize
         print(datetime.now() - start)
 

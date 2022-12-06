@@ -578,7 +578,7 @@
                   <string/>
                  </property>
                  <property name="pixmap">
-                  <pixmap>logo.png</pixmap>
+                  <pixmap>../../../../.designer/backup/logo.png</pixmap>
                  </property>
                  <property name="scaledContents">
                   <bool>true</bool>
@@ -776,6 +776,38 @@
            </attribute>
            <layout class="QGridLayout" name="gridLayout_9">
             <item row="0" column="0">
+             <widget class="QGroupBox" name="groupBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="title">
+               <string>Добавление нового счетчика</string>
+              </property>
+              <layout class="QGridLayout" name="gridLayout_10">
+               <item row="2" column="0">
+                <widget class="QPushButton" name="pushButton_4">
+                 <property name="text">
+                  <string>Добавить счетчик</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLineEdit" name="lineEdit_2"/>
+               </item>
+               <item row="0" column="0">
+                <widget class="QLabel" name="label_6">
+                 <property name="text">
+                  <string>Введите название счетчика:</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item row="1" column="0">
              <widget class="QGroupBox" name="groupBox_2">
               <property name="title">
                <string>Добавить активность</string>
@@ -806,7 +838,7 @@
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>Список активностей:</string>
+                  <string>Выберите счетчик:</string>
                  </property>
                 </widget>
                </item>
@@ -897,7 +929,7 @@
                  </column>
                  <column>
                   <property name="text">
-                   <string>Награда</string>
+                   <string>Выбран</string>
                   </property>
                  </column>
                 </widget>
@@ -1055,65 +1087,7 @@
                  <height>465</height>
                 </rect>
                </property>
-               <layout class="QGridLayout" name="gridLayout_12">
-                <item row="0" column="0">
-                 <widget class="QPushButton" name="pushButton_6">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>100</width>
-                    <height>100</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>PushButton</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QPushButton" name="pushButton_7">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>100</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>PushButton</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="2">
-                 <widget class="QPushButton" name="pushButton_8">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>100</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>PushButton</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
+               <layout class="QGridLayout" name="gridLayout_12"/>
               </widget>
              </widget>
             </item>
@@ -1146,7 +1120,7 @@
                <string/>
               </property>
               <property name="pixmap">
-               <pixmap>logo.png</pixmap>
+               <pixmap>../../../../.designer/backup/logo.png</pixmap>
               </property>
               <property name="scaledContents">
                <bool>true</bool>
