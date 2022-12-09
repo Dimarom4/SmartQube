@@ -364,8 +364,71 @@ class main_window(QtWidgets.QMainWindow):
         self.ui.pushButton_5.clicked.connect(self.add_new_activ)
 
 
-    def lesson_new(self): #todo сделать добавить добавление очков за активности и кр код от кнопок
-        print(self.sender().text())
+    def lesson_new(self):
+
+
+        self.add_lessons.ui.lineEdit.clear()
+        # self.add_lessons.setWindowTitle(self.sender().text())
+        self.add_lessons.ui.lineEdit.setFocus()
+        qr_word = ''
+        for x in range(20):  # Количество символов (16)
+            qr_word = qr_word + random.choice(list(
+                '1234567890abcdefghigklmnopqrstuvyxwzABCDEFGHIGKLMNOPQRSTUVYXWZ'))  # Символы, из которых будет составлен qr-слово
+        print("qr",qr_word)
+        img = qrcode.make(qr_word)
+        img.save("qr_code.png")
+        db.collection('visits').document('qrCodes').update({
+            'cabinet1': qr_word
+        })
+        self.add_lessons.ui.label.setPixmap(QtGui.QPixmap("qr_code.png"))
+        self.add_lessons.ui.lineEdit.returnPressed.connect(partial(self.add_point_new,self.sender().text()))
+        self.add_lessons.displayInfo()
+
+    def add_point_new(self,activ_name): #todo оптимизировать и проверять на достижения
+        counters= db.collection('counters').where('activ_name','==',activ_name).stream()
+        self.add_lessons.ui.label_3.show()
+        QtCore.QCoreApplication.processEvents()
+        start = datetime.now()
+        users = db.collection('users').where(u'cardId', u'==', self.add_lessons.ui.lineEdit.text()).stream()
+
+
+        update_data = {}
+        for user in users:
+
+            for count in counters:
+                doc_id=count.id
+                user_id=user.get('userId')
+                user_doc_id=user.id
+                user_count=count.get('users').get(user.get('userId'))
+        print('clear', datetime.now() - start)
+
+        print(doc_id)
+        threads = []
+        threads.append(threading.Thread(target=self.update_db_users, args=(user_doc_id,user)))
+        threads.append(threading.Thread(target=self.update_db_counters, args=(doc_id,user_id,user_count)))
+        #self.update_db_users(user_doc_id,user)
+        #self.update_db_counters(doc_id,user_id,user_count)
+        for thread in threads:
+            thread.start()  # каждый поток должен быть запущен
+        for thread in threads:
+            thread.join()
+        print('clear', datetime.now() - start)
+
+        self.add_lessons.ui.label_3.hide()
+        self.add_lessons.ui.lineEdit.clear()
+    #запись в бд добавления очков
+    def update_db_users(self,user_doc_id,user):
+        start = datetime.now()
+        db.collection('users').document(user_doc_id).update({
+            'allPoints': user.get('allPoints') + 1
+        })
+        print(12,datetime.now()-start)
+    def update_db_counters(self,doc_id,user_id,user_count):
+        start = datetime.now()
+        db.collection('counters').document(doc_id).update({
+            'users.' + str(user_id): user_count + 1
+        })
+        print(14,datetime.now()-start)
     #добавление новой активности
     def add_new_activ(self):
         users_data = {
@@ -385,13 +448,31 @@ class main_window(QtWidgets.QMainWindow):
 
     #обновление активностей
     def update_counters(self):
+        print('update_counters')
         counter = db.collection('counters').stream()
         count_counter=1
         for count in counter:
             rowPosition = self.ui.tableWidget.rowCount()
-            # print(rowPosition)
             if rowPosition < count_counter:
                 self.ui.tableWidget.insertRow(rowPosition)
+
+                self.ui.pushButton_activ = QtWidgets.QPushButton(self.ui.scrollAreaWidgetContents_2)
+                sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+                sizePolicy.setHorizontalStretch(0)
+                sizePolicy.setVerticalStretch(0)
+                sizePolicy.setHeightForWidth(self.ui.pushButton_activ.sizePolicy().hasHeightForWidth())
+                self.ui.pushButton_activ.setSizePolicy(sizePolicy)
+                self.ui.pushButton_activ.setMinimumSize(QtCore.QSize(100, 100))
+                self.ui.pushButton_activ.setObjectName("pushButton_activ")  # +str(count_counter-1))
+                self.ui.pushButton_activ.setText(str(count.get('activ_name')))
+
+                if self.ui.gridLayout_12.count() % 3 == 0:
+                    self.ui.gridLayout_12.addWidget(self.ui.pushButton_activ, self.ui.gridLayout_12.rowCount(),
+                                                    0, 1, 1)
+                else:
+                    self.ui.gridLayout_12.addWidget(self.ui.pushButton_activ, self.ui.gridLayout_12.rowCount() - 1,
+                                                    self.ui.gridLayout_12.count() % 3, 1, 1)
+
             item = QtWidgets.QTableWidgetItem(str(count.get('activ_name')))
             item.setFlags(QtCore.Qt.ItemIsDragEnabled | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidget.setItem(count_counter-1, 0, item)
@@ -403,21 +484,8 @@ class main_window(QtWidgets.QMainWindow):
             self.ui.tableWidget.setItem(count_counter-1, 1, item)
             count_counter+=1
 
-            self.ui.pushButton_activ = QtWidgets.QPushButton(self.ui.scrollAreaWidgetContents_2)
-            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-            sizePolicy.setHorizontalStretch(0)
-            sizePolicy.setVerticalStretch(0)
-            sizePolicy.setHeightForWidth(self.ui.pushButton_activ.sizePolicy().hasHeightForWidth())
-            self.ui.pushButton_activ.setSizePolicy(sizePolicy)
-            self.ui.pushButton_activ.setMinimumSize(QtCore.QSize(100, 100))
-            self.ui.pushButton_activ.setObjectName("pushButton_activ")  # +str(count_counter-1))
-            self.ui.pushButton_activ.setText(str(count.get('activ_name')))
-            if self.ui.gridLayout_12.count() % 3 == 0:
-                self.ui.gridLayout_12.addWidget(self.ui.pushButton_activ, self.ui.gridLayout_12.rowCount(),
-                                                0, 1, 1)
-            else:
-                self.ui.gridLayout_12.addWidget(self.ui.pushButton_activ, self.ui.gridLayout_12.rowCount() - 1,
-                                                self.ui.gridLayout_12.count() % 3, 1, 1)
+
+
             self.ui.pushButton_activ.clicked.connect(self.lesson_new)
 
     #добавление ивента в БД
@@ -457,7 +525,11 @@ class main_window(QtWidgets.QMainWindow):
 
     #закрытие уроков и обновление бд
     def add_lessons_close(self):
+        start=datetime.now()
+
         self.update_uch_data_from_db()
+        self.update_achiv_data_from_db()
+        print('update after close lessons', datetime.now() - start)
         os.remove('qr_code.png')
         self.add_lessons.close()
     #Функция для одноразового запуска другой функции
@@ -475,7 +547,7 @@ class main_window(QtWidgets.QMainWindow):
 
         print("clicked")
         self.add_lessons.ui.lineEdit.clear()
-        self.add_lessons.setWindowTitle(self.sender().text())
+        #self.add_lessons.setWindowTitle(self.sender().text())
         self.add_lessons.ui.lineEdit.setFocus()
         if self.sender().text() == "Посещение занятий и мастер классов":
             point = 1
@@ -491,7 +563,6 @@ class main_window(QtWidgets.QMainWindow):
             point = 6
         elif self.sender().text() == "Участие в фестивале":
             point = 5
-
         # qr code
         qr_word = ''
         for x in range(20):  # Количество символов (16)
@@ -505,7 +576,7 @@ class main_window(QtWidgets.QMainWindow):
         })
 
         self.add_lessons.ui.label.setPixmap(QtGui.QPixmap("qr_code.png"))
-        self.add_lessons.ui.lineEdit.returnPressed.connect(partial(self.add_point, point, self.sender().text()))
+        #self.add_lessons.ui.lineEdit.returnPressed.connect(partial(self.add_point, point, self.sender().text()))
 
         self.add_lessons.displayInfo()
 
@@ -623,7 +694,10 @@ class main_window(QtWidgets.QMainWindow):
                     achiv_id:"0"
                 }
          }, merge=True)
+
+
         self.update_uch_data_from_db()
+        self.update_achiv_data_from_db()
 
     # генерация пароля
     def generate_password(self):
@@ -697,6 +771,7 @@ class main_window(QtWidgets.QMainWindow):
         db.reference("users").child(login).set(user_data)
         '''
         self.update_uch_data_from_db()
+        self.update_achiv_data_from_db()
 
         # storage.child("users_image/logo.png").put(imagePath)   #put('logo1.png')
     #обновление учеников и достижений
@@ -716,7 +791,7 @@ class main_window(QtWidgets.QMainWindow):
             if rowPosition < user_number:
                 self.ui.tableWidget_uch.insertRow(rowPosition)
 
-            print(user_number,rowPosition,self.ui.tableWidget_uch.rowCount())
+            #print(user_number,rowPosition,self.ui.tableWidget_uch.rowCount())
             # добавление данных в ячейки
             # ID
             item = QtWidgets.QTableWidgetItem(user.get('userId'))
@@ -775,8 +850,10 @@ class main_window(QtWidgets.QMainWindow):
 
             user_number += 1
         print(datetime.now() - start)
+
+
+    def update_achiv_data_from_db(self):
         start = datetime.now()
-        # обновление достижений
         achivments = db.collection('achivments').stream()
         achiv_number = 1
         for achivment in achivments:
@@ -810,11 +887,8 @@ class main_window(QtWidgets.QMainWindow):
             self.ui.tableWidget_achiv.setItem(achiv_number - 1, 3, item)
             # self.ui.tableWidget_achiv.item(achiv_number - 1, 3).setText(achivment.get('type'))
 
-
-
             achiv_number += 1
-
-        print(datetime.now()-start)
+        print('update_achiv',datetime.now() - start)
     #обновление мероприятий
     def update_event_data_from_db(self,data):
 
@@ -1542,6 +1616,7 @@ class main_window(QtWidgets.QMainWindow):
             })
             print(user.id)
         self.update_uch_data_from_db()
+        self.update_achiv_data_from_db()
         # self.uch_info.ui.lineEdit.returnPressed.disconnect()
 
     # удаление карты
@@ -1556,6 +1631,7 @@ class main_window(QtWidgets.QMainWindow):
             print(user.id)
         self.uch_info.ui.lineEdit.setText("None")
         self.update_uch_data_from_db()
+        self.update_achiv_data_from_db()
 
     # включение видимости карт
     def enable_card(self, login):

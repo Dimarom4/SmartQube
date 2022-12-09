@@ -776,38 +776,6 @@
            </attribute>
            <layout class="QGridLayout" name="gridLayout_9">
             <item row="0" column="0">
-             <widget class="QGroupBox" name="groupBox">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="title">
-               <string>Добавление нового счетчика</string>
-              </property>
-              <layout class="QGridLayout" name="gridLayout_10">
-               <item row="2" column="0">
-                <widget class="QPushButton" name="pushButton_4">
-                 <property name="text">
-                  <string>Добавить счетчик</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="0">
-                <widget class="QLineEdit" name="lineEdit_2"/>
-               </item>
-               <item row="0" column="0">
-                <widget class="QLabel" name="label_6">
-                 <property name="text">
-                  <string>Введите название счетчика:</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </widget>
-            </item>
-            <item row="1" column="0">
              <widget class="QGroupBox" name="groupBox_2">
               <property name="title">
                <string>Добавить активность</string>
@@ -1190,8 +1158,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>698</width>
-                 <height>628</height>
+                 <width>98</width>
+                 <height>28</height>
                 </rect>
                </property>
                <layout class="QGridLayout" name="gridLayout_8"/>
