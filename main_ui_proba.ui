@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>760</width>
+    <width>1018</width>
     <height>710</height>
    </rect>
   </property>
@@ -52,7 +52,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>742</width>
+         <width>1000</width>
          <height>692</height>
         </rect>
        </property>
@@ -69,7 +69,7 @@
            <enum>QTabWidget::Rounded</enum>
           </property>
           <property name="currentIndex">
-           <number>4</number>
+           <number>0</number>
           </property>
           <property name="documentMode">
            <bool>false</bool>
@@ -363,29 +363,6 @@
             <string>Достижения</string>
            </attribute>
            <layout class="QGridLayout" name="gridLayout_7">
-            <item row="3" column="2">
-             <widget class="QSpinBox" name="spinBox_reward_search"/>
-            </item>
-            <item row="3" column="1">
-             <widget class="QLabel" name="label_reward">
-              <property name="text">
-               <string>Награда:</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="0" colspan="4">
-             <widget class="QLabel" name="label_all_achiv">
-              <property name="text">
-               <string>Все достижения</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
             <item row="0" column="0" colspan="4">
              <widget class="QGroupBox" name="groupBox_add_achiv">
               <property name="minimumSize">
@@ -442,8 +419,21 @@
                  </item>
                 </widget>
                </item>
+               <item row="7" column="4">
+                <widget class="QSpinBox" name="spinBox_reward_search_2">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
                <item row="7" column="3">
                 <widget class="QCheckBox" name="checkBox_achiv_type_2">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
                  <property name="layoutDirection">
                   <enum>Qt::LeftToRight</enum>
                  </property>
@@ -454,13 +444,6 @@
                   <bool>false</bool>
                  </property>
                  <property name="tristate">
-                  <bool>false</bool>
-                 </property>
-                </widget>
-               </item>
-               <item row="7" column="4">
-                <widget class="QSpinBox" name="spinBox_reward_search_2">
-                 <property name="enabled">
                   <bool>false</bool>
                  </property>
                 </widget>
@@ -508,9 +491,6 @@
                  </column>
                 </widget>
                </item>
-               <item row="2" column="1" colspan="4">
-                <widget class="QLineEdit" name="lineEdit_achiv_name_2"/>
-               </item>
                <item row="7" column="0">
                 <widget class="QLabel" name="label">
                  <property name="text">
@@ -525,20 +505,6 @@
                  </property>
                 </widget>
                </item>
-               <item row="3" column="3" colspan="2">
-                <widget class="QPushButton" name="pushButton_add_uch_to_achiv">
-                 <property name="text">
-                  <string>Добавить участника</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="11" column="0" colspan="5">
-                <widget class="QPushButton" name="pushButton_add_achive_2">
-                 <property name="text">
-                  <string>Добавить достижение</string>
-                 </property>
-                </widget>
-               </item>
                <item row="5" column="4">
                 <widget class="QSpinBox" name="spinBox_reward_search_3">
                  <property name="enabled">
@@ -546,17 +512,23 @@
                  </property>
                 </widget>
                </item>
+               <item row="3" column="3" colspan="2">
+                <widget class="QPushButton" name="pushButton_add_uch_to_achiv">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Добавить участника</string>
+                 </property>
+                </widget>
+               </item>
                <item row="3" column="0" colspan="3">
                 <widget class="QPushButton" name="pushButton_select_image_2">
                  <property name="text">
                   <string>Выбрать картинку</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="5" column="0" colspan="3">
-                <widget class="QPushButton" name="pushButton_delete_image">
-                 <property name="text">
-                  <string>Удалить</string>
                  </property>
                 </widget>
                </item>
@@ -585,7 +557,79 @@
                  </property>
                 </widget>
                </item>
+               <item row="5" column="0" colspan="3">
+                <widget class="QPushButton" name="pushButton_delete_image">
+                 <property name="text">
+                  <string>Удалить</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="11" column="0" colspan="6">
+                <widget class="QPushButton" name="pushButton_add_achive_2">
+                 <property name="text">
+                  <string>Добавить достижение</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="5" rowspan="4">
+                <widget class="QTableWidget" name="tableWidget_2">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <attribute name="verticalHeaderVisible">
+                  <bool>false</bool>
+                 </attribute>
+                 <column>
+                  <property name="text">
+                   <string>Название </string>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Очков за активность</string>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Выбран</string>
+                  </property>
+                 </column>
+                </widget>
+               </item>
+               <item row="3" column="5">
+                <widget class="QCheckBox" name="checkBox">
+                 <property name="text">
+                  <string>Привязать к активности</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1" colspan="5">
+                <widget class="QLineEdit" name="lineEdit_achiv_name_2"/>
+               </item>
               </layout>
+             </widget>
+            </item>
+            <item row="3" column="2">
+             <widget class="QSpinBox" name="spinBox_reward_search"/>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLabel" name="label_reward">
+              <property name="text">
+               <string>Награда:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0" colspan="4">
+             <widget class="QLabel" name="label_all_achiv">
+              <property name="text">
+               <string>Все достижения</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
              </widget>
             </item>
             <item row="2" column="0" colspan="3">
@@ -897,7 +941,7 @@
                  </column>
                  <column>
                   <property name="text">
-                   <string>Выбран</string>
+                   <string>Очков за активность</string>
                   </property>
                  </column>
                 </widget>
@@ -1051,7 +1095,7 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>698</width>
+                 <width>956</width>
                  <height>465</height>
                 </rect>
                </property>
@@ -1158,8 +1202,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>98</width>
-                 <height>28</height>
+                 <width>956</width>
+                 <height>628</height>
                 </rect>
                </property>
                <layout class="QGridLayout" name="gridLayout_8"/>
@@ -1186,12 +1230,28 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>581</x>
-     <y>343</y>
+     <x>398</x>
+     <y>369</y>
     </hint>
     <hint type="destinationlabel">
-     <x>718</x>
-     <y>345</y>
+     <x>492</x>
+     <y>371</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>tableWidget_2</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>593</x>
+     <y>82</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>598</x>
+     <y>198</y>
     </hint>
    </hints>
   </connection>

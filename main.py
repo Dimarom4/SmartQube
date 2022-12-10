@@ -363,7 +363,13 @@ class main_window(QtWidgets.QMainWindow):
         #добавление новой активности
         self.ui.pushButton_5.clicked.connect(self.add_new_activ)
 
+        self.ui.tableWidget_2.itemChanged.connect(self.count_check)
 
+    def count_check(self, item):
+        if item.checkState() == 2:
+            for i in range(self.ui.tableWidget_2.rowCount()):
+                if self.ui.tableWidget_2.item(i, 2) != item:
+                    self.ui.tableWidget_2.item(i, 2).setCheckState(QtCore.Qt.Unchecked)
     def lesson_new(self):
 
 
@@ -402,9 +408,8 @@ class main_window(QtWidgets.QMainWindow):
                 user_count=count.get('users').get(user.get('userId'))
         print('clear', datetime.now() - start)
 
-        print(doc_id)
         threads = []
-        threads.append(threading.Thread(target=self.update_db_users, args=(user_doc_id,user)))
+        threads.append(threading.Thread(target=self.update_db_users, args=(user_doc_id,user,point)))#todo добавить поинты
         threads.append(threading.Thread(target=self.update_db_counters, args=(doc_id,user_id,user_count)))
         #self.update_db_users(user_doc_id,user)
         #self.update_db_counters(doc_id,user_id,user_count)
@@ -417,10 +422,11 @@ class main_window(QtWidgets.QMainWindow):
         self.add_lessons.ui.label_3.hide()
         self.add_lessons.ui.lineEdit.clear()
     #запись в бд добавления очков
-    def update_db_users(self,user_doc_id,user):
+    def update_db_users(self,user_doc_id,user,point):
         start = datetime.now()
         db.collection('users').document(user_doc_id).update({
-            'allPoints': user.get('allPoints') + 1
+            'allPoints': user.get('allPoints') + point,
+            'points': user.get('points') + point
         })
         print(12,datetime.now()-start)
     def update_db_counters(self,doc_id,user_id,user_count):
@@ -455,6 +461,7 @@ class main_window(QtWidgets.QMainWindow):
             rowPosition = self.ui.tableWidget.rowCount()
             if rowPosition < count_counter:
                 self.ui.tableWidget.insertRow(rowPosition)
+                self.ui.tableWidget_2.insertRow(rowPosition)
 
                 self.ui.pushButton_activ = QtWidgets.QPushButton(self.ui.scrollAreaWidgetContents_2)
                 sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
@@ -474,17 +481,29 @@ class main_window(QtWidgets.QMainWindow):
                                                     self.ui.gridLayout_12.count() % 3, 1, 1)
 
             item = QtWidgets.QTableWidgetItem(str(count.get('activ_name')))
-            item.setFlags(QtCore.Qt.ItemIsDragEnabled | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+            item.setFlags(QtCore.Qt.ItemIsDragEnabled  | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidget.setItem(count_counter-1, 0, item)
+
+            item = QtWidgets.QTableWidgetItem(str(count.get('activ_name')))
+            item.setFlags(QtCore.Qt.ItemIsDragEnabled  | QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_2.setItem(count_counter-1, 0, item)
             #выбран
+            item = QtWidgets.QTableWidgetItem(str(count.get('activ_point')))
+            item.setTextAlignment(QtCore.Qt.AlignCenter)
+            item.setFlags(QtCore.Qt.ItemIsSelectable  | QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget.setItem(count_counter-1, 1, item)
+
+            item = QtWidgets.QTableWidgetItem(str(count.get('activ_point')))
+            item.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.ui.tableWidget_2.setItem(count_counter - 1, 1, item)
+
             item = QtWidgets.QTableWidgetItem()
             item.setTextAlignment(QtCore.Qt.AlignCenter)
-            #item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-            item = QtWidgets.QTableWidgetItem(str(count.get('activ_point')))
-            self.ui.tableWidget.setItem(count_counter-1, 1, item)
+            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+            item.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.tableWidget_2.setItem(count_counter - 1, 2, item)
+
             count_counter+=1
-
-
 
             self.ui.pushButton_activ.clicked.connect(self.lesson_new)
 
@@ -1219,14 +1238,33 @@ class main_window(QtWidgets.QMainWindow):
             # print(rowPosition)
             if rowPosition < count_counter:
                 self.ui.tableWidget.insertRow(rowPosition)
+                self.ui.tableWidget_2.insertRow(rowPosition)
             item = QtWidgets.QTableWidgetItem(str(count.get('activ_name')))
+            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidget.setItem(count_counter - 1, 0, item)
+
+            item = QtWidgets.QTableWidgetItem(str(count.get('activ_name')))
+            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidget_2.setItem(count_counter - 1, 0, item)
+
             # выбран
+            item = QtWidgets.QTableWidgetItem(str(count.get('activ_point')))
+            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+            item.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.ui.tableWidget.setItem(count_counter - 1, 1, item)
+
+            item = QtWidgets.QTableWidgetItem(str(count.get('activ_point')))
+            item.setFlags(QtCore.Qt.ItemIsSelectable  | QtCore.Qt.ItemIsEnabled)
+            item.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.ui.tableWidget_2.setItem(count_counter - 1, 1, item)
+
             item = QtWidgets.QTableWidgetItem()
             item.setTextAlignment(QtCore.Qt.AlignCenter)
-            #item.setFlags(QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled)
-            item = QtWidgets.QTableWidgetItem(str(count.get('activ_point')))
-            self.ui.tableWidget.setItem(count_counter - 1, 1, item)
+            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+            item.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.tableWidget_2.setItem(count_counter - 1, 2, item)
+
+
             count_counter += 1
 
             self.ui.pushButton_activ = QtWidgets.QPushButton(self.ui.scrollAreaWidgetContents_2)
