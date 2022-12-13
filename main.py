@@ -29,6 +29,7 @@ from firebase_admin import db
 from firebase_admin import storage
 from firebase_admin import auth
 from firebase_admin import firestore
+#from firebase_admin import batch
 
 import qrcode
 
@@ -390,75 +391,62 @@ class main_window(QtWidgets.QMainWindow):
         self.add_lessons.ui.lineEdit.returnPressed.connect(partial(self.add_point_new,self.sender().text()))
         self.add_lessons.displayInfo()
 
-    def add_point_new(self,activ_name): #todo оптимизировать и проверять на достижения
+    def add_point_new(self,activ_name): #todo оптимизировать
         counters= db.collection('counters').where('activ_name','==',activ_name).stream()
         self.add_lessons.ui.label_3.show()
         QtCore.QCoreApplication.processEvents()
         start = datetime.now()
         users = db.collection('users').where(u'cardId', u'==', self.add_lessons.ui.lineEdit.text()).stream()
 
-
-        update_data = {}
         for user in users:
+
             for count in counters:
+                print(datetime.now() - start)
                 count_doc_id=count.id
-                point=count.get('activ_point')
+                added_point=count.get('activ_point')
                 user_id=user.get('userId')
                 user_doc_id=user.id
                 user_count=count.get('users').get(user.get('userId'))
 
         print('clear', datetime.now() - start)
 
-        threads = []
-        threads.append(threading.Thread(target=self.update_db_users, args=(user_doc_id,user,point)))
-        threads.append(threading.Thread(target=self.update_db_counters, args=(count_doc_id,user_id,user_count)))
-        threads.append(threading.Thread(target=self.achiv_check, args=(user_id,user_doc_id,count_doc_id,point,user)))
-        #self.update_db_users(user_doc_id,user)
-        #self.update_db_counters(doc_id,user_id,user_count)
-        for thread in threads:
-            thread.start()  # каждый поток должен быть запущен
-        for thread in threads:
-            thread.join()
-        #self.achiv_check(user_id, user_doc_id, count_doc_id, point)
+        #Проверка достижений
+
+        achivments = db.collection('achivments').where('pointsNeed', '==', user_count + 1).stream()
+
+        # пакетная запись
+        batch = db.batch()
+        for achiv in achivments:
+            print('achiv search')
+            achiv_point = achiv.get('point')
+            added_point+=achiv_point
+            achiv_id = achiv.get('achivID')
+            #обновляем достижение у юзера
+            batch.update(db.collection('users').document(user_doc_id), {
+                'achivProgress.' + achiv_id: str(datetime.today().day) + '.' + str(datetime.today().month) + '.' + str(
+                    datetime.today().year)
+            })
+
+
+        #ученику очки
+        batch.update(db.collection('users').document(user_doc_id), {
+            'allPoints': user.get('allPoints') + added_point,
+            'points': user.get('points') + added_point,
+            'hours': user.get('hours')+1
+        })
+        #счетчик увеличиваем
+        batch.update(db.collection('counters').document(count_doc_id), {
+            'users.' + str(user_id): user_count + 1
+        })
+
+        batch.commit()
         print('clear1', datetime.now() - start)
+
 
 
         self.add_lessons.ui.label_3.hide()
         self.add_lessons.ui.lineEdit.clear()
-    def achiv_check(self,user_id,user_doc_id,count_doc_id,point,user):
-        start = datetime.now()
-        user_count=db.collection('counters').document(count_doc_id).get().to_dict().get('users').get(user_id)
-        print(user_count)
-        achivments = db.collection('achivments').where('pointsNeed', '<=', user_count+point).where('pointsNeed', '>=', user_count).stream()
-        for achiv in achivments:
-            print(achiv.get('name'))
-            achiv_point=achiv.get('point')
-            achiv_id=achiv.get('achivID')
 
-        db.collection('users').document(user_doc_id).update({
-            'allPoints': user.get('allPoints') + achiv_point,
-            'points': user.get('points') + achiv_point,
-            'achivProgress.'+achiv_id: str(datetime.today().day) + '.' + str(datetime.today().month) + '.' + str(
-                datetime.today().year)
-        })
-
-
-
-        print(datetime.now()-start)
-    #запись в бд добавления очков
-    def update_db_users(self,user_doc_id,user,point):
-        start = datetime.now()
-        db.collection('users').document(user_doc_id).update({
-            'allPoints': user.get('allPoints') + point,
-            'points': user.get('points') + point
-        })
-        print(12,datetime.now()-start)
-    def update_db_counters(self,doc_id,user_id,user_count):
-        start = datetime.now()
-        db.collection('counters').document(doc_id).update({
-            'users.' + str(user_id): user_count + 1
-        })
-        print(14,datetime.now()-start)
     #добавление новой активности
     def add_new_activ(self):
         users_data = {
