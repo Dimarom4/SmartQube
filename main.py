@@ -400,27 +400,51 @@ class main_window(QtWidgets.QMainWindow):
 
         update_data = {}
         for user in users:
-
             for count in counters:
-                doc_id=count.id
+                count_doc_id=count.id
+                point=count.get('activ_point')
                 user_id=user.get('userId')
                 user_doc_id=user.id
                 user_count=count.get('users').get(user.get('userId'))
+
         print('clear', datetime.now() - start)
 
         threads = []
-        threads.append(threading.Thread(target=self.update_db_users, args=(user_doc_id,user,point)))#todo добавить поинты
-        threads.append(threading.Thread(target=self.update_db_counters, args=(doc_id,user_id,user_count)))
+        threads.append(threading.Thread(target=self.update_db_users, args=(user_doc_id,user,point)))
+        threads.append(threading.Thread(target=self.update_db_counters, args=(count_doc_id,user_id,user_count)))
+        threads.append(threading.Thread(target=self.achiv_check, args=(user_id,user_doc_id,count_doc_id,point,user)))
         #self.update_db_users(user_doc_id,user)
         #self.update_db_counters(doc_id,user_id,user_count)
         for thread in threads:
             thread.start()  # каждый поток должен быть запущен
         for thread in threads:
             thread.join()
-        print('clear', datetime.now() - start)
+        #self.achiv_check(user_id, user_doc_id, count_doc_id, point)
+        print('clear1', datetime.now() - start)
+
 
         self.add_lessons.ui.label_3.hide()
         self.add_lessons.ui.lineEdit.clear()
+    def achiv_check(self,user_id,user_doc_id,count_doc_id,point,user):
+        start = datetime.now()
+        user_count=db.collection('counters').document(count_doc_id).get().to_dict().get('users').get(user_id)
+        print(user_count)
+        achivments = db.collection('achivments').where('pointsNeed', '<=', user_count+point).where('pointsNeed', '>=', user_count).stream()
+        for achiv in achivments:
+            print(achiv.get('name'))
+            achiv_point=achiv.get('point')
+            achiv_id=achiv.get('achivID')
+
+        db.collection('users').document(user_doc_id).update({
+            'allPoints': user.get('allPoints') + achiv_point,
+            'points': user.get('points') + achiv_point,
+            'achivProgress.'+achiv_id: str(datetime.today().day) + '.' + str(datetime.today().month) + '.' + str(
+                datetime.today().year)
+        })
+
+
+
+        print(datetime.now()-start)
     #запись в бд добавления очков
     def update_db_users(self,user_doc_id,user,point):
         start = datetime.now()
@@ -679,7 +703,7 @@ class main_window(QtWidgets.QMainWindow):
             blob.make_public()
             image_url = blob.public_url
 
-        if self.ui.tableWidget_uch_in_achiv.rowCount() != 0: #todo переделать добавление очков
+        if self.ui.tableWidget_uch_in_achiv.rowCount() != 0:
             point = {}
             for i in range(len(users)):
                 point.update({str(i): "0"})
@@ -967,7 +991,7 @@ class main_window(QtWidgets.QMainWindow):
         # изображение
 
         start = datetime.now()
-        image = QtGui.QPixmap('logo1.png')  # TODO раскоментить(долго чекать просто)
+        image = QtGui.QPixmap('logo1.png')
         url_image = data.get("images")[0]
 
         # response, content = h.request(url_image,"GET")
@@ -975,8 +999,8 @@ class main_window(QtWidgets.QMainWindow):
         # image.loadFromData(content)
         p = QtGui.QPixmap('logo1.png')
 
-        # поменял функцию ресайза на свою
-        # self.ui.label_7.resizeEvent=self.onresize
+
+
         # ширина высота
         self.ui.label_7.setPixmap(p.scaled(200, 200, QtCore.Qt.AspectRatioMode.KeepAspectRatio,
                                            QtCore.Qt.TransformationMode.SmoothTransformation))
@@ -1123,7 +1147,7 @@ class main_window(QtWidgets.QMainWindow):
         events=db.collection('events').stream()
         count=1
 
-        #self.ui.label_7.resizeEvent = self.onresize
+
         threads = []
         h = httplib2.Http('.cache')
         for event in events:
@@ -1186,7 +1210,7 @@ class main_window(QtWidgets.QMainWindow):
             #изображение
 
             start = datetime.now()
-            image = QtGui.QPixmap('logo1.png.png') #TODO раскоментить(долго чекать просто)
+            image = QtGui.QPixmap('logo1.png.png')
             url_image = event.get("images")[0]
 
             #response, content = h.request(url_image,"GET")
@@ -1194,8 +1218,7 @@ class main_window(QtWidgets.QMainWindow):
             #image.loadFromData(content)
             p=QtGui.QPixmap('logo.png')
 
-            #поменял функцию ресайза на свою
-            #self.ui.label_7.resizeEvent=self.onresize
+
                                             #ширина высота
             self.ui.label_7.setPixmap(p.scaled(200,200,QtCore.Qt.AspectRatioMode.KeepAspectRatio,QtCore.Qt.TransformationMode.SmoothTransformation))
             print(count, datetime.now() - start)
@@ -1285,7 +1308,7 @@ class main_window(QtWidgets.QMainWindow):
             self.ui.pushButton_activ.clicked.connect(self.lesson_new)
 
 
-        #self.ui.groupBox.resizeEvent = self.onresize
+
         print(datetime.now() - start)
 
     #print(self.ui.gridLayout_8.count())
@@ -1312,30 +1335,7 @@ class main_window(QtWidgets.QMainWindow):
 
         Label_obj.setPixmap(cropped.scaled(200, 200, QtCore.Qt.AspectRatioMode.KeepAspectRatio,
                                          QtCore.Qt.TransformationMode.SmoothTransformation))
-    def onresize(self,event):
-        #print("resized",event.size())
-        count=0
-        #p=QtGui.QPixmap("cash\\cash_"+str(count) +".png")
-        print(self.ui.widget_4.width(), self.ui.widget_4.height())
 
-        for i in range(self.ui.gridLayout_8.count()):
-            Label_obj = self.ui.gridLayout_8.itemAt(i).widget().findChild(QtWidgets.QLabel, "label_7")
-            #sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
-            #sizePolicy.setHorizontalStretch(0)
-            #sizePolicy.setVerticalStretch(0)
-            #sizePolicy.setHeightForWidth(Label_obj.sizePolicy().hasHeightForWidth())
-            #Label_obj.setSizePolicy(sizePolicy)
-
-            Label_obj.setFixedSize(self.ui.widget_4.width()-10,self.ui.widget_4.height()-10)
-            p = QtGui.QPixmap("cash\\cash" + str(count) + ".png")
-            Label_obj.setPixmap(p.scaled(self.ui.widget_4.width()-10, self.ui.widget_4.height()-10, QtCore.Qt.AspectRatioMode.KeepAspectRatio))#,
-                                               #QtCore.Qt.TransformationMode.SmoothTransformation))
-            count+=1
-            '''
-            if image is not None:
-                Label_obj.setPixmap(image.scaled(event.size().height(), event.size().width(), QtCore.Qt.AspectRatioMode.KeepAspectRatio))
-                                        #QtCore.Qt.TransformationMode.SmoothTransformation))
-            '''
 
     # открытие карточки достижения
     def open_achiv_Window(self):
@@ -1352,6 +1352,7 @@ class main_window(QtWidgets.QMainWindow):
         for i in db.collection('achivments').where(u'achivID', u'==', achiv_id).stream():
             achiv_info = i.to_dict()
 
+        counter =db.collection('counters').document(achiv_info.get('counter')).get().get('users')
         # print(achiv_info)
         for user in users:
 
@@ -1379,7 +1380,10 @@ class main_window(QtWidgets.QMainWindow):
             if len(user.get('achivProgress').get(achiv_id)) >= 8:
                 self.achiv_info.ui.tableWidget.item(user_number - 1, 2).setText(str(achiv_info.get('pointsNeed')))
             else:
-                self.achiv_info.ui.tableWidget.item(user_number - 1, 2).setText(user.get('achivProgress').get(achiv_id))
+                self.achiv_info.ui.tableWidget.item(user_number - 1, 2).setText(str(counter.get(user.get('userId'))))
+
+
+            #print(user.get('userId'),counter.get(user.get('userId')))
 
             # награда
             item = QtWidgets.QTableWidgetItem()
@@ -1514,6 +1518,10 @@ class main_window(QtWidgets.QMainWindow):
         print(user_table_ID)
         find_id = ''
         user_login = ''
+        achivments = db.collection('achivments').stream()
+
+
+
         for user in users:
             if user.get('userId') == user_table_ID:
                 user_login = user.get('login')
@@ -1523,19 +1531,8 @@ class main_window(QtWidgets.QMainWindow):
                 self.uch_info.ui.lineEdit_3.setText(str(user.get('password')))
                 self.uch_info.ui.lineEdit_2.setText(str(user.get('login')))
 
-                # find_id=db.reference('users').child(user_login).child("user_ID").get()
-                '''
-        #print('ID',user_table_ID,users.get(list(users.keys())[user_table_ID]).get('login'),find_id)
-        users_list= db.reference('users').child(user_login).get()
-    #   users_list = users.get(list(users.keys())[find_id])
-        find_id=users_list.get('user_ID')
-        #print('ученик1', users_list1)
-        #print('ученик',find_id, users_list)
-        achivments = db.reference('achivments').get()
-        #print(achivments)
-                '''
 
-                achivments = db.collection('achivments').stream()
+                #achivments = db.collection('achivments').stream()
                 # achivments_list = list(achivments[row].items())
                 achiv_counter = 1
                 for achiv in achivments:
@@ -1559,23 +1556,24 @@ class main_window(QtWidgets.QMainWindow):
                     self.uch_info.ui.tableWidget.setItem(achiv_counter - 1, 1, item)
                     self.uch_info.ui.tableWidget.item(achiv_counter - 1, 1).setText(achiv.get('name'))
                     # Прогресс
-
+                    counter = db.collection('counters').document(achiv.get('counter')).get()
                     item = QtWidgets.QTableWidgetItem()
                     item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEnabled)
                     self.uch_info.ui.tableWidget.setItem(achiv_counter - 1, 2, item)
                     if len(user.get('achivProgress').get(achiv.get('achivID'))) <= 7:
                         self.uch_info.ui.tableWidget.item(achiv_counter - 1, 2).setText(
-                            str(user.get('achivProgress').get(achiv.get('achivID'))))
+                            str(counter.get('users').get(user.get('userId'))))
                     else:
                         self.uch_info.ui.tableWidget.item(achiv_counter - 1, 2).setText(str(achiv.get('pointsNeed')))
+
                     # награда
                     item = QtWidgets.QTableWidgetItem()
                     item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable)
                     self.uch_info.ui.tableWidget.setItem(achiv_counter - 1, 3, item)
 
-                    if len(user.get('achivProgress').get(achiv.get('achivID'))) >= 8:
+                    if len(user.get('achivProgress').get(achiv.get('achivID'))) >= 7:
                         self.uch_info.ui.tableWidget.item(achiv_counter - 1, 3).setText(
-                            str(user.get('achivProgress').get(achiv.get('achivID'))))
+                            str(achiv.get('point')))
                     else:
                         self.uch_info.ui.tableWidget.item(achiv_counter - 1, 3).setText('0')
                     # достижение
