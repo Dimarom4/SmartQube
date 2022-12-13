@@ -349,16 +349,7 @@ class main_window(QtWidgets.QMainWindow):
         self.ui.pushButton_add_new_uch.clicked.connect(self.add_new_uch)
         # новое достижение
         self.ui.pushButton_add_achive_2.clicked.connect(self.add_new_achiv)
-        # посещения
-        self.ui.pushButton_lesson.clicked.connect(self.lesson)
-        self.ui.pushButton_intensiv.clicked.connect(self.lesson)
-        self.ui.pushButton_club_1.clicked.connect(self.lesson)
-        self.ui.pushButton_club_2.clicked.connect(self.lesson)
-        self.ui.pushButton_club_3.clicked.connect(self.lesson)
-        self.ui.pushButton_help_1.clicked.connect(self.lesson)
-        self.ui.pushButton_help_2.clicked.connect(self.lesson)
-        self.ui.pushButton_help_3.clicked.connect(self.lesson)
-        self.ui.pushButton_festival.clicked.connect(self.lesson)
+
         # мероприятия
         self.ui.pushButton_3.clicked.connect(self.save_event)
         #добавление новой активности
@@ -501,7 +492,7 @@ class main_window(QtWidgets.QMainWindow):
             self.ui.tableWidget_2.setItem(count_counter-1, 0, item)
             #выбран
             item = QtWidgets.QTableWidgetItem(str(count.get('activ_point')))
-            item.setTextAlignment(QtCore.Qt.AlignCenter)
+            item.setTextAlignment(QtCore.Qt.AlignLeft)
             item.setFlags(QtCore.Qt.ItemIsSelectable  | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidget.setItem(count_counter-1, 1, item)
 
@@ -573,102 +564,6 @@ class main_window(QtWidgets.QMainWindow):
         wrapper.has_run = False
         return wrapper
 
-    # посещения
-    def lesson(self):
-
-        print("clicked")
-        self.add_lessons.ui.lineEdit.clear()
-        #self.add_lessons.setWindowTitle(self.sender().text())
-        self.add_lessons.ui.lineEdit.setFocus()
-        if self.sender().text() == "Посещение занятий и мастер классов":
-            point = 1
-        elif self.sender().text() == "Посещение интенсивов" \
-                or self.sender().text() == "Клубное событие 3 уровня" \
-                or self.sender().text() == "Помощь клубу 3 уровня":
-            point = 2
-        elif self.sender().text() == "Клубное событие 2 уровня" \
-                or self.sender().text() == "Помощь клубу 2 уровня":
-            point = 4
-        elif self.sender().text() == "Клубное событие 1 уровня" \
-                or self.sender().text() == "Помощь клубу 1 уровня":
-            point = 6
-        elif self.sender().text() == "Участие в фестивале":
-            point = 5
-        # qr code
-        qr_word = ''
-        for x in range(20):  # Количество символов (16)
-            qr_word = qr_word + random.choice(list(
-                '1234567890abcdefghigklmnopqrstuvyxwzABCDEFGHIGKLMNOPQRSTUVYXWZ'))  # Символы, из которых будет составлен qr-слово
-        print(qr_word)
-        img = qrcode.make(qr_word)
-        img.save("qr_code.png")
-        db.collection('visits').document('qrCodes').update({
-            'cabinet1':qr_word
-        })
-
-        self.add_lessons.ui.label.setPixmap(QtGui.QPixmap("qr_code.png"))
-        #self.add_lessons.ui.lineEdit.returnPressed.connect(partial(self.add_point, point, self.sender().text()))
-
-        self.add_lessons.displayInfo()
-
-    def add_point(self, point, achiv_text):
-
-        self.add_lessons.movie = QtGui.QMovie("Loading.gif")
-        self.add_lessons.ui.label_3.show()
-        QtCore.QCoreApplication.processEvents()
-
-        achiv_search = 'None'
-        if achiv_text == "Посещение занятий и мастер классов":
-            achiv_search = "Посетить занятия"
-        elif achiv_text == "Посещение интенсивов":
-            achiv_search = "Посетить интенсив"
-        elif achiv_text == "Клубное событие 3 уровня":
-            achiv_search = "Участвовать в клубном событии 3"
-        elif achiv_text == "Помощь клубу 3 уровня":
-            achiv_search = "Участвовать в помощи клубу 3"
-        elif achiv_text == "Клубное событие 2 уровня":
-            achiv_search = "Участвовать в клубном событии 2"
-        elif achiv_text == "Помощь клубу 2 уровня":
-            achiv_search = "Участвовать в помощи клубу 2"
-        elif achiv_text == "Клубное событие 1 уровня":
-            achiv_search = "Участвовать в клубном событии 1"
-        elif achiv_text == "Помощь клубу 1 уровня":
-            achiv_search = "Участвовать в помощи клубу 1"
-        elif achiv_text == "Участие в фестивале":
-            achiv_search = "Принять участие в фестивале"
-
-        achivments = db.collection('achivments').where('name', u'>',achiv_search).where('name', u'<', achiv_search+'я' ).stream()
-        users = db.collection('users').where(u'cardId', u'==', self.add_lessons.ui.lineEdit.text()).stream()
-
-        start = datetime.now()
-        update_data={}
-        for user in users:
-            update_data={
-                'allPoints': int(user.get('allPoints')) + point,
-                'points': int(user.get('points')) + point,
-                'hours': int(user.get('hours')) + 1
-            }
-            for achiv in achivments:
-                achivID = achiv.get('achivID')
-                achiv_progress= user.get('achivProgress').get(achivID)
-                if len(achiv_progress) <=6:
-                    update_data['achivProgress.'+ achivID]=str(int(achiv_progress)+1)
-                    #Изменение на дату если очки набраны
-                    if int(achiv_progress) == achiv.get('pointsNeed')-1:
-                        update_data['achivProgress.' + achivID] = str(datetime.today().day) + '.' + str(datetime.today().month) + '.' + str(
-                            datetime.today().year)
-                        update_data['allPoints']= int(user.get('allPoints')) + point+ achiv.get('point')
-                        update_data['points']: int(user.get('points')) + point+ achiv.get('point')
-
-
-            db.collection('users').document(user.id).update(update_data)
-            print(user.get('cardId'),datetime.now() - start)
-
-        self.add_lessons.ui.label_3.hide()
-        self.add_lessons.ui.lineEdit.clear()
-
-        #self.update_uch_data_from_db()
-
     # добавление нового достижения
     def add_new_achiv(self):
 
@@ -677,7 +572,7 @@ class main_window(QtWidgets.QMainWindow):
         type = self.ui.comboBox_achiv_type.currentText()
         points_need = self.ui.spinBox_reward_search_3.value()
         image_url = 'None'
-
+        achiv_counter=None
 
 
         point = 0
@@ -707,11 +602,18 @@ class main_window(QtWidgets.QMainWindow):
 
         if self.ui.spinBox_reward_search_2.isEnabled():
             point = int(self.ui.spinBox_reward_search_2.value())
-
+        if self.ui.checkBox.isEnabled():
+            for i in range(self.ui.tableWidget_2.rowCount()):
+                if self.ui.tableWidget_2.item(i, 2).checkState()==2:
+                    activ_name=self.ui.tableWidget_2.item(i, 0).text()
+                    self.ui.tableWidget_2.item(i, 2).setCheckState(QtCore.Qt.Unchecked)
+            for counter in db.collection('counters').where('activ_name','==',activ_name).stream():
+                achiv_counter=counter.id
         achivment_data = {
             'achivID': achiv_id,
             'achivImageURL': image_url,
             'name': name,
+            'counter':achiv_counter,
             'point': point,
             'pointsNeed': points_need,
             'type': type
@@ -725,7 +627,13 @@ class main_window(QtWidgets.QMainWindow):
                     achiv_id:"0"
                 }
          }, merge=True)
-
+        #clear
+        self.ui.lineEdit_achiv_name_2.setText('')
+        self.ui.checkBox.setCheckState(QtCore.Qt.Unchecked)
+        self.ui.checkBox_achiv_type_2.setCheckState(QtCore.Qt.Unchecked)
+        self.ui.spinBox_reward_search_3.setValue(0)
+        self.ui.spinBox_reward_search_2.setValue(0)
+        self.delete_image_2()
 
         self.update_uch_data_from_db()
         self.update_achiv_data_from_db()
