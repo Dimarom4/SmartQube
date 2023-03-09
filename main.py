@@ -725,7 +725,8 @@ class main_window(QtWidgets.QMainWindow):
         for user in users:
             lenght = self.ui.tableWidget_uch.rowCount()
             # print(lenght)
-            rowPosition = self.ui.tableWidget_uch.rowCount()
+            rowPosition = user_number#self.ui.tableWidget_uch.rowCount()
+            rowPosition = user_number#self.ui.tableWidget_uch.rowCount()
             # print(rowPosition)
             if rowPosition < user_number:
                 self.ui.tableWidget_uch.insertRow(rowPosition)
@@ -771,7 +772,7 @@ class main_window(QtWidgets.QMainWindow):
             item.setFlags(QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidget_uch.setItem(user_number - 1, 6, item)
 
-            self.ui.tableWidget_leaderboard.insertRow(user_number - 1)
+            #self.ui.tableWidget_leaderboard.insertRow(user_number - 1)
             #leaderboard
             item = QtWidgets.QTableWidgetItem(str(user.get('userId')))
             item.setFlags(QtCore.Qt.ItemIsEnabled)
