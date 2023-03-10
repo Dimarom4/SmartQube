@@ -673,6 +673,18 @@ class main_window(QtWidgets.QMainWindow):
             user_id = user_id + random.choice(list(
                 '1234567890abcdefghigklmnopqrstuvyxwzABCDEFGHIGKLMNOPQRSTUVYXWZ'))  # Символы, из которых будет составлен пароль
 
+        # Добавление в счетчики
+        counters= db.collection("counters").stream()
+
+        for count in counters:
+            db.collection("counters").document(count.id).set(
+                {
+                    "users":{
+                        user_id:0
+                    }
+
+                }, merge=True
+            )
 
         #print('imagePath', user_imagePath, type(user_imagePath))
         # print(storage.child("users_image/logo.png").get_url(user['idToken']))
