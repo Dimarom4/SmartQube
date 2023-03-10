@@ -340,6 +340,7 @@ class main_window(QtWidgets.QMainWindow):
         # поиск
         self.ui.pushButton_uch_search.clicked.connect(self.search_uch)
         self.ui.pushButton_achiv_search.clicked.connect(self.search_achiv)
+        self.achiv_info.ui.pushButton_11.clicked.connect(self.search_uch_in_achiv)
 
         # открытие информации
         self.ui.tableWidget_achiv.cellDoubleClicked.connect(self.open_achiv_Window)
@@ -1851,6 +1852,34 @@ class main_window(QtWidgets.QMainWindow):
         else:
             for i in range(self.ui.tableWidget_achiv.rowCount()):
                 self.ui.tableWidget_achiv.setRowHidden(i, False)
+
+    #поиск учеников в информации о достижении
+    def search_uch_in_achiv(self):
+        print("searched")
+
+        if self.achiv_info.ui.lineEdit.text() != "":
+            print("Поиск по тексту")
+
+            # текст
+            items_text_row = []
+            rows = self.achiv_info.ui.tableWidget.rowCount()
+            for i in range(rows):
+                print(self.achiv_info.ui.tableWidget.item(i, 1).text())
+                if self.achiv_info.ui.tableWidget.item(i, 1).text().find(str(self.achiv_info.ui.lineEdit.text())) != -1:
+                    items_text_row.append(i)
+            print(items_text_row)
+
+            if len(items_text_row) != 0:
+                for i in range(self.achiv_info.ui.tableWidget.rowCount()):
+                    self.achiv_info.ui.tableWidget.setRowHidden(i, False)
+                # скрытие лишних
+                for i in range(self.achiv_info.ui.tableWidget.rowCount()):
+                    if i not in items_text_row:
+                        self.achiv_info.ui.tableWidget.setRowHidden(i, True)
+        else:
+            for i in range(self.achiv_info.ui.tableWidget.rowCount()):
+                self.achiv_info.ui.tableWidget.setRowHidden(i, False)
+
 
     # получение сообщения
     @QtCore.pyqtSlot(list)
