@@ -389,16 +389,22 @@ class main_window(QtWidgets.QMainWindow):
         start = datetime.now()
         users = db.collection('users').where(u'cardId', u'==', self.add_lessons.ui.lineEdit.text()).stream()
 
-        for user in users:
 
+        user_flag=0
+        for user in users:
+            user_flag=1
             for count in counters:
                 print(datetime.now() - start)
                 count_doc_id=count.id
                 added_point=count.get('activ_point')
                 user_id=user.get('userId')
+
                 user_doc_id=user.id
                 user_count=count.get('users').get(user.get('userId'))
-
+        if user_flag==0:
+            self.add_lessons.ui.label_3.hide()
+            self.add_lessons.ui.lineEdit.clear()
+            return
         print('clear', datetime.now() - start)
 
         #Проверка достижений
@@ -1470,6 +1476,7 @@ class main_window(QtWidgets.QMainWindow):
                     item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEnabled)
                     self.uch_info.ui.tableWidget.setItem(achiv_counter - 1, 2, item)
                     if len(user.get('achivProgress').get(achiv.get('achivID'))) <= 7:
+
                         self.uch_info.ui.tableWidget.item(achiv_counter - 1, 2).setText(
                             str(counter.get('users').get(user.get('userId'))))
                     else:
