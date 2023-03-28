@@ -704,13 +704,13 @@ class main_window(QtWidgets.QMainWindow):
 
         user_data = {
             'achivProgress': achiv_progress,
-            "cart": {},
-            "likes": {},
-            "orders": {},
-            "addresses":{},
+            "cart": [],
+            "likes": [],
+            "orders": [],
             "allPoints": 0,
             "cardId": 'None',
             "hours": 0,
+            "email": login + "@cubs.com" ,
             "login": login,
             "name": self.ui.lineEdit_uch_name.text(),
             "password": password,
